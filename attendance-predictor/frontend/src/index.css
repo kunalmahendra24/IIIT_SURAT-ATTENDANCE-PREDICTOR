@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  input[type="date"],
+  input[type="time"] {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    @apply min-h-screen font-sans text-slate-200 antialiased;
+    background-color: #030712;
+    background-image:
+      radial-gradient(ellipse 100% 80% at 50% -30%, rgba(45, 212, 191, 0.14), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 100% 10%, rgba(27, 58, 92, 0.45), transparent 50%),
+      radial-gradient(ellipse 50% 40% at 0% 80%, rgba(34, 211, 238, 0.08), transparent 45%),
+      linear-gradient(180deg, #030712 0%, #0b1220 40%, #0f172a 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .ui-panel {
+    @apply rounded-3xl border border-white/[0.08] bg-white/[0.03] shadow-panel backdrop-blur-xl;
+    transition:
+      border-color 0.35s ease,
+      box-shadow 0.35s ease,
+      transform 0.35s ease;
+  }
+
+  .ui-panel:hover {
+    @apply border-teal-400/20 shadow-glow-sm;
+  }
+
+  .ui-input {
+    @apply mt-2 w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-slate-100 shadow-inner placeholder:text-slate-500;
+    @apply transition-colors focus:border-teal-400/50 focus:outline-none focus:ring-2 focus:ring-teal-400/20;
+  }
+
+  .ui-btn-primary {
+    @apply rounded-xl bg-gradient-to-r from-primary via-[#1e4976] to-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-500/10;
+    @apply ring-1 ring-white/10 transition-all hover:shadow-glow-sm hover:ring-teal-400/30;
+  }
+
+  .ui-badge {
+    @apply inline-flex items-center rounded-full border border-teal-400/25 bg-teal-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-300;
+  }
+}
+
+@layer utilities {
+  .text-gradient-hero {
+    @apply bg-gradient-to-r from-teal-300 via-cyan-200 to-sky-400 bg-clip-text text-transparent;
+    background-size: 200% auto;
+    animation: gradient-shift 10s ease infinite;
+  }
+
+  .font-display {
+    font-family: Outfit, system-ui, sans-serif;
+  }
+}
+
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+}
+
+/* Legacy alias used in some motion components */
+.card-glass {
+  @apply ui-panel;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-gradient-hero {
+    animation: none;
+    background-position: center;
+  }
+}

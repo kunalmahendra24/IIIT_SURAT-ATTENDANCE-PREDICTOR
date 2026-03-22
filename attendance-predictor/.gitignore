@@ -1,0 +1,11 @@
+backend/model/*.pkl
+backend/__pycache__/
+backend/**/__pycache__/
+backend/email_settings.json
+backend/notification_log.json
+frontend/node_modules/
+frontend/dist/
+.venv/
+venv/
+*.pyc
+.env.local
