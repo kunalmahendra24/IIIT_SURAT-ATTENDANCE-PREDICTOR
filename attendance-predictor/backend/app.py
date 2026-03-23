@@ -55,6 +55,7 @@ def _default_settings() -> dict:
         "smtp_port": int(os.getenv("SMTP_PORT", "587")),
         "sender_email": os.getenv("SENDER_EMAIL", ""),
         "sender_password": os.getenv("SENDER_PASSWORD", ""),
+        "mail_from": os.getenv("SMTP_FROM_EMAIL", ""),
         "enabled": False,
         "send_time": os.getenv("NOTIFICATION_TIME", "18:00"),
     }
@@ -216,6 +217,7 @@ def api_settings_email():
         "smtp_port",
         "sender_email",
         "sender_password",
+        "mail_from",
         "enabled",
         "send_time",
     ):

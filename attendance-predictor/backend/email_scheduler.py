@@ -34,6 +34,7 @@ def _default_settings() -> dict:
         "smtp_port": int(os.getenv("SMTP_PORT", "587")),
         "sender_email": os.getenv("SENDER_EMAIL", ""),
         "sender_password": os.getenv("SENDER_PASSWORD", ""),
+        "mail_from": os.getenv("SMTP_FROM_EMAIL", ""),
         "enabled": False,
         "send_time": os.getenv("NOTIFICATION_TIME", "18:00"),
     }
@@ -68,10 +69,15 @@ def send_forecast_email(to_email: str, payload: dict, predicted: int) -> None:
     settings = load_settings()
     smtp_host = settings.get("smtp_host") or os.getenv("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(settings.get("smtp_port") or 587)
-    sender = settings.get("sender_email") or os.getenv("SENDER_EMAIL")
+    login_user = settings.get("sender_email") or os.getenv("SENDER_EMAIL")
     password = settings.get("sender_password") or os.getenv("SENDER_PASSWORD")
-    if not sender or not password:
-        raise RuntimeError("SMTP sender_email and sender_password must be configured")
+    mail_from = (
+        (settings.get("mail_from") or "").strip()
+        or os.getenv("SMTP_FROM_EMAIL", "").strip()
+        or login_user
+    )
+    if not login_user or not password:
+        raise RuntimeError("SMTP sender_email (login) and sender_password must be configured")
 
     d = payload["date"]
     dow = payload["day_of_week"]
@@ -103,14 +109,14 @@ def send_forecast_email(to_email: str, payload: dict, predicted: int) -> None:
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subj
-    msg["From"] = sender
+    msg["From"] = mail_from
     msg["To"] = to_email
     msg.attach(MIMEText(html, "html"))
 
     with smtplib.SMTP(smtp_host, smtp_port) as server:
         server.starttls()
-        server.login(sender, password)
-        server.sendmail(sender, [to_email], msg.as_string())
+        server.login(login_user, password)
+        server.sendmail(mail_from, [to_email], msg.as_string())
 
     logger.info("Sent forecast email to %s at %s", to_email, datetime.utcnow().isoformat())
 

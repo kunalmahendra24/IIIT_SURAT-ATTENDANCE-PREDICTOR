@@ -10,3 +10,5 @@ frontend/dist/
 venv/
 *.pyc
 .env.local
+backend/.env
+.env

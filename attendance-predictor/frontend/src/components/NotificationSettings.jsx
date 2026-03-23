@@ -13,6 +13,7 @@ export default function NotificationSettings() {
     smtp_host: "smtp.gmail.com",
     smtp_port: 587,
     sender_email: "",
+    mail_from: "",
     sender_password: "",
     enabled: false,
     send_time: "18:00",
@@ -32,6 +33,7 @@ export default function NotificationSettings() {
         smtp_host: data.smtp_host || f.smtp_host,
         smtp_port: data.smtp_port ?? f.smtp_port,
         sender_email: data.sender_email || "",
+        mail_from: data.mail_from || "",
         enabled: !!data.enabled,
         send_time: data.send_time || "18:00",
       }));
@@ -178,16 +180,27 @@ export default function NotificationSettings() {
                     </label>
                   </div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Sender email
+                    SMTP login (Brevo: xxxxx@smtp-brevo.com)
                     <input
                       type="email"
                       value={form.sender_email}
                       onChange={(e) => setForm({ ...form, sender_email: e.target.value })}
                       className="ui-input"
+                      placeholder="998917001@smtp-brevo.com"
                     />
                   </label>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Sender password / app password
+                    From address (optional — must be verified in Brevo)
+                    <input
+                      type="email"
+                      value={form.mail_from}
+                      onChange={(e) => setForm({ ...form, mail_from: e.target.value })}
+                      className="ui-input"
+                      placeholder="ui23ec34@iiitsurat.ac.in"
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    SMTP key / password (Brevo SMTP key)
                     <input
                       type="password"
                       placeholder={passwordSet ? "(leave blank to keep)" : ""}
