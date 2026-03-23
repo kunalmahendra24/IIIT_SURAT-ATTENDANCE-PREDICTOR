@@ -1,4 +1,5 @@
-backend/model/*.pkl
+# Model pickles are required for production (e.g. Vercel). Commit them or deployment returns errors.
+# backend/model/*.pkl
 backend/__pycache__/
 backend/**/__pycache__/
 backend/email_settings.json

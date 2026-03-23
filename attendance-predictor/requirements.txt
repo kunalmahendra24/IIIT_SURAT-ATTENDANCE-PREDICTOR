@@ -1,0 +1,9 @@
+flask
+flask-cors
+pandas
+openpyxl
+numpy
+scikit-learn
+joblib
+apscheduler
+python-dotenv
