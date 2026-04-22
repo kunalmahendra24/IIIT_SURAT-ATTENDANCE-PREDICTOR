@@ -5,14 +5,16 @@ from __future__ import annotations
 
 import json
 import os
+import hmac
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from calendar_features import reload_calendar
 from calendar_service import extract_events_from_pdf, validate_calendar_payload
@@ -52,7 +54,68 @@ CORS(
             ]
         }
     },
+    supports_credentials=True,
 )
+
+_ADMIN_COOKIE = "admin_token"
+_ADMIN_TOKEN_MAX_AGE_S = 60 * 60 * 24 * 7  # 7 days
+
+
+def _serializer() -> URLSafeTimedSerializer:
+    secret = os.getenv("SECRET_KEY") or os.getenv("FLASK_SECRET_KEY") or ""
+    if not secret:
+        # If not set, admin auth is effectively disabled (no one can log in).
+        # This avoids deploying with an accidental insecure default.
+        secret = ""
+    return URLSafeTimedSerializer(secret_key=secret, salt="attendance-predictor-admin")
+
+
+def _is_secure_request() -> bool:
+    if request.is_secure:
+        return True
+    # Vercel / proxies
+    proto = (request.headers.get("X-Forwarded-Proto") or "").lower()
+    return proto == "https"
+
+
+def _admin_expected_credentials() -> tuple[str, str]:
+    # NOTE: You must set these in Vercel env vars.
+    user = os.getenv("ADMIN_USERNAME", "admin")
+    pw = os.getenv("ADMIN_PASSWORD", "")
+    return user, pw
+
+
+def _admin_token_from_request() -> str | None:
+    token = request.cookies.get(_ADMIN_COOKIE)
+    if token:
+        return token
+    auth = request.headers.get("Authorization") or ""
+    if auth.lower().startswith("bearer "):
+        return auth.split(" ", 1)[1].strip() or None
+    return None
+
+
+def _is_admin_authenticated() -> bool:
+    expected_user, expected_pw = _admin_expected_credentials()
+    if not expected_pw:
+        return False
+    token = _admin_token_from_request()
+    if not token:
+        return False
+    s = _serializer()
+    if not (s.secret_key or ""):
+        return False
+    try:
+        data = s.loads(token, max_age=_ADMIN_TOKEN_MAX_AGE_S)
+        return isinstance(data, dict) and data.get("u") == expected_user and data.get("v") == 1
+    except (BadSignature, SignatureExpired):
+        return False
+
+
+def _require_admin_or_401():
+    if _is_admin_authenticated():
+        return None
+    return jsonify({"error": "Unauthorized"}), 401
 
 
 def _default_settings() -> dict:
@@ -107,10 +170,49 @@ def get_last_notification_time() -> str | None:
     return None
 
 
-def _require_admin() -> bool:
-    expected = os.getenv("ADMIN_PASSWORD", "")
-    provided = request.headers.get("X-Admin-Password", "")
-    return bool(expected) and provided == expected
+@app.route("/api/admin/me", methods=["GET"])
+def api_admin_me():
+    return jsonify({"authenticated": _is_admin_authenticated()})
+
+
+@app.route("/api/admin/login", methods=["POST"])
+def api_admin_login():
+    expected_user, expected_pw = _admin_expected_credentials()
+    if not expected_pw:
+        return jsonify({"error": "Admin login is not configured"}), 503
+
+    body = request.get_json(silent=True) or {}
+    username = str(body.get("username") or "")
+    password = str(body.get("password") or "")
+
+    if not (
+        hmac.compare_digest(username, expected_user) and hmac.compare_digest(password, expected_pw)
+    ):
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    s = _serializer()
+    if not (s.secret_key or ""):
+        return jsonify({"error": "SECRET_KEY is not set"}), 503
+
+    token = s.dumps({"u": expected_user, "v": 1})
+    resp = make_response(jsonify({"ok": True, "username": expected_user}))
+    resp.set_cookie(
+        _ADMIN_COOKIE,
+        token,
+        max_age=_ADMIN_TOKEN_MAX_AGE_S,
+        httponly=True,
+        samesite="Lax",
+        secure=_is_secure_request(),
+        path="/",
+    )
+    return resp
+
+
+@app.route("/api/admin/logout", methods=["POST"])
+def api_admin_logout():
+    resp = make_response(jsonify({"ok": True}))
+    resp.set_cookie(_ADMIN_COOKIE, "", max_age=0, httponly=True, samesite="Lax", secure=_is_secure_request(), path="/")
+    return resp
 
 
 @app.route("/api/predict", methods=["GET"])
@@ -274,8 +376,9 @@ def api_calendar_events():
 
 @app.route("/api/calendar/upload", methods=["POST"])
 def api_calendar_upload():
-    if not _require_admin():
-        return jsonify({"error": "Unauthorized"}), 401
+    guard = _require_admin_or_401()
+    if guard is not None:
+        return guard
 
     # Max 10 MB
     if request.content_length is not None and request.content_length > 10 * 1024 * 1024:
@@ -300,8 +403,9 @@ def api_calendar_upload():
 
 @app.route("/api/calendar/save", methods=["POST"])
 def api_calendar_save():
-    if not _require_admin():
-        return jsonify({"error": "Unauthorized"}), 401
+    guard = _require_admin_or_401()
+    if guard is not None:
+        return guard
 
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
@@ -333,8 +437,9 @@ def api_calendar_save():
 
 @app.route("/api/calendar/retrain", methods=["POST"])
 def api_calendar_retrain():
-    if not _require_admin():
-        return jsonify({"error": "Unauthorized"}), 401
+    guard = _require_admin_or_401()
+    if guard is not None:
+        return guard
     try:
         out = retrain_with_safety_net()
         # Match requested response shape (only include selected metric keys)
@@ -357,8 +462,9 @@ def api_calendar_retrain():
 
 @app.route("/api/calendar/rollback", methods=["POST"])
 def api_calendar_rollback():
-    if not _require_admin():
-        return jsonify({"error": "Unauthorized"}), 401
+    guard = _require_admin_or_401()
+    if guard is not None:
+        return guard
     try:
         # Restore model artifacts
         restore_artifacts()

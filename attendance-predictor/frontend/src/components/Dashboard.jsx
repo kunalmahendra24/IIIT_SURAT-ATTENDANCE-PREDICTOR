@@ -248,20 +248,10 @@ export default function Dashboard() {
   const reduce = useReducedMotion();
   const [now, setNow] = useState(new Date());
   const [lastPrediction, setLastPrediction] = useState(null);
-  const [adminMode, setAdminMode] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      setAdminMode(params.get("admin") === "1");
-    } catch {
-      setAdminMode(false);
-    }
   }, []);
 
   return (
@@ -340,15 +330,13 @@ export default function Dashboard() {
             <BestDaysFinder />
           </ScrollSection>
 
-          {adminMode ? (
-            <ScrollSection id="calendar-admin" delay={0.015}>
-              <SectionHeading
-                title="Admin"
-                subtitle="Upload and maintain the academic calendar used by rankings and features."
-              />
-              <CalendarAdmin />
-            </ScrollSection>
-          ) : null}
+          <ScrollSection id="calendar-admin" delay={0.015}>
+            <SectionHeading
+              title="Admin"
+              subtitle="Upload and maintain the academic calendar used by rankings and features."
+            />
+            <CalendarAdmin />
+          </ScrollSection>
 
           <ScrollSection id="resources" delay={0.02}>
             <SectionHeading

@@ -1,18 +1,11 @@
 import { motion, useReducedMotion } from "framer-motion";
 
 function buildLinks() {
-  let adminMode = false;
-  try {
-    const params = new URLSearchParams(window.location.search);
-    adminMode = params.get("admin") === "1";
-  } catch {
-    adminMode = false;
-  }
   const links = [
     { id: "predict", label: "Predict" },
     { id: "best-days", label: "Best Days" },
+    { id: "calendar-admin", label: "Admin" },
   ];
-  if (adminMode) links.push({ id: "calendar-admin", label: "Admin" });
   links.push(
     { id: "resources", label: "Resources" },
     { id: "week", label: "7-day" },
