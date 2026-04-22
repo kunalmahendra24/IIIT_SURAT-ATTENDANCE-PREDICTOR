@@ -1,12 +1,26 @@
 import { motion, useReducedMotion } from "framer-motion";
 
-const LINKS = [
-  { id: "predict", label: "Predict" },
-  { id: "resources", label: "Resources" },
-  { id: "week", label: "7-day" },
-  { id: "trends", label: "Trends" },
-  { id: "notify", label: "Alerts" },
-];
+function buildLinks() {
+  let adminMode = false;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    adminMode = params.get("admin") === "1";
+  } catch {
+    adminMode = false;
+  }
+  const links = [
+    { id: "predict", label: "Predict" },
+    { id: "best-days", label: "Best Days" },
+  ];
+  if (adminMode) links.push({ id: "calendar-admin", label: "Admin" });
+  links.push(
+    { id: "resources", label: "Resources" },
+    { id: "week", label: "7-day" },
+    { id: "trends", label: "Trends" },
+    { id: "notify", label: "Alerts" }
+  );
+  return links;
+}
 
 const SCROLL_OFFSET = 88;
 
@@ -22,6 +36,7 @@ function scrollToSection(id, preferSmooth) {
 
 function NavButtons({ layout = "row" }) {
   const reduce = useReducedMotion();
+  const LINKS = buildLinks();
 
   const go = (hash) => {
     scrollToSection(hash, !reduce);

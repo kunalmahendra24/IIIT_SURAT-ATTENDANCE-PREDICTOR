@@ -84,6 +84,12 @@ If Vite picks another port, add it in `app.py` under `CORS(...)`.
 | `GET` | `/api/predict-range?start=&end=` | Sequential days; each day feeds the next via extended series for lags |
 | `GET` | `/api/historical` | Daily `date` + `attendance` for charts |
 | `GET` | `/api/model-info` | `trained_at`, metrics, feature importances, `last_historical_date`, etc. |
+| `GET` | `/api/best-days?start=&end=&top_n=&min_attendance=&event_type=&include_saturdays=` | Rank best dates for events using predictions + weekday history + calendar + confidence |
+| `GET` | `/api/calendar/events` | Public: current academic calendar JSON |
+| `POST` | `/api/calendar/upload` | Admin: upload calendar PDF (multipart `pdf`) → extract events (LLM) (no save) |
+| `POST` | `/api/calendar/save` | Admin: save edited calendar JSON (creates `calendar_events.prev.json`) + hot-reload |
+| `POST` | `/api/calendar/retrain` | Admin: retrain model with safety net (auto-revert if much worse) |
+| `POST` | `/api/calendar/rollback` | Admin: restore previous model artifacts (+ restore previous calendar if present) |
 | `GET` | `/api/settings/email` | Email settings (password omitted); `last_notification_at` |
 | `POST` | `/api/settings/email` | Update SMTP / staff email / enable / send time |
 | `POST` | `/api/send-notification` | Send test email for **tomorrow**’s forecast |
@@ -130,6 +136,10 @@ The vector passed to the forest is **exactly** this list (see `FEATURE_NAMES` in
 | `is_month_start`, `is_month_end` | Rough boundary flags |
 | `lag_1`, `lag_7` | Previous day / 7 days ago attendance (from historical series; fallbacks if missing) |
 | `rolling_mean_7`, `rolling_mean_30` | Rolling means of past attendance |
+| `is_holiday`, `is_exam_day`, `is_break`, `is_fest_day` | Academic calendar flags |
+| `days_to_nearest_holiday`, `days_after_holiday` | Holiday proximity signals (capped) |
+| `days_to_next_exam` | Exam proximity signal (capped) |
+| `is_sandwich_day`, `is_post_break_monday` | Calendar-pattern flags |
 
 **Training:** last 20% of rows (time-ordered, `shuffle=False`) for hold-out metrics.
 
@@ -284,6 +294,56 @@ Static output in `frontend/dist/`. You still need a **separate** host for the AP
 ---
 
 ## 11. Limitations & caveats
+## 11.1 Best Days Finder
+
+The dashboard includes a “Best Days Finder” that ranks dates in a range for hosting events.
+This is **ranking-focused**: due to mixed-scale training data, absolute predicted counts have limited precision.
+
+Scoring combines:
+
+- Predicted attendance (normalized within range)
+- Historical weekday strength (mean by day-of-week from `historical_daily.pkl`)
+- Academic calendar proximity (holidays/exams)
+- Confidence tightness (Random Forest per-tree spread)
+
+Backend: `GET /api/best-days` implemented in `backend/recommendation_service.py`.
+
+---
+
+## 11.2 Calendar PDF Pipeline
+
+Admins can upload an institute academic calendar PDF, extract events via an LLM, review/edit, and save:
+
+- `POST /api/calendar/upload` (admin) → extracts structured events (does not write to disk)
+- `POST /api/calendar/save` (admin) → writes `backend/calendar_events.json` and keeps a backup at `backend/calendar_events.prev.json`
+- `GET /api/calendar/events` (public) → returns current saved calendar
+
+Saved calendar data is cached for performance and can be reloaded immediately after save without server restart.
+
+Backend: `backend/calendar_service.py`, `backend/calendar_features.py`
+Frontend: `frontend/src/components/CalendarAdmin.jsx` (only shown when `?admin=1`)
+
+---
+
+## 11.3 Retraining Safety Net
+
+After updating the calendar, admins can retrain the model:
+
+- `POST /api/calendar/retrain` (admin)
+  - Backs up all model artifacts to `*.prev.pkl`
+  - Trains a new model with the current calendar features
+  - Auto-reverts to previous artifacts if MdAPE degrades by >20%
+  - Hot-reloads the model in the running API process
+
+Manual rollback is always available:
+
+- `POST /api/calendar/rollback` (admin)
+  - Restores model artifacts from `*.prev.pkl`
+  - Restores `calendar_events.prev.json` if present
+  - Hot-reloads both calendar and model caches
+
+Backend: `backend/retrain_service.py`, `backend/model/train_model.py`
+
 
 1. **Scale mixing:** Daily grids, snapshot rollups, and multi-class sums can produce **very different scales** on the same timeline; metrics (e.g. mean MAPE) can look extreme — training prints **MdAPE** and **wMAPE** partly for that reason.
 2. **Sunday data in history:** If your training data accidentally contains **non-zero Sundays**, the model may still have learned patterns; inference **overrides Sunday to 0** anyway.
@@ -299,6 +359,9 @@ Static output in `frontend/dist/`. You still need a **separate** host for the AP
 | API shape / new route | `backend/app.py` |
 | Model inputs / Sunday rules | `backend/prediction_service.py` |
 | Training / data parsing | `backend/model/train_model.py` |
+| Calendar extraction/admin | `backend/calendar_service.py`, `backend/calendar_features.py`, `frontend/src/components/CalendarAdmin.jsx` |
+| Retraining safety net | `backend/retrain_service.py`, `backend/model/train_model.py` |
+| Best-days ranking | `backend/recommendation_service.py`, `frontend/src/components/BestDaysFinder.jsx` |
 | UI copy / layout | `frontend/src/components/Dashboard.jsx` and children |
 | API base URL in dev | `frontend/vite.config.js` |
 | CORS origins | `backend/app.py` |

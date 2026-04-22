@@ -10,6 +10,8 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from calendar_features import compute_calendar_features, get_cached_events
+
 BACKEND_DIR = Path(__file__).resolve().parent
 MODEL_DIR = BACKEND_DIR / "model"
 MODEL_PATH = MODEL_DIR / "attendance_model.pkl"
@@ -26,6 +28,20 @@ DAY_NAMES = [
     "Saturday",
     "Sunday",
 ]
+
+_artifacts_cache: tuple | None = None
+
+
+def _get_cached_artifacts():
+    global _artifacts_cache
+    if _artifacts_cache is None:
+        _artifacts_cache = load_artifacts()
+    return _artifacts_cache
+
+
+def reload_artifacts() -> None:
+    global _artifacts_cache
+    _artifacts_cache = None
 
 
 def load_artifacts():
@@ -105,6 +121,7 @@ def build_feature_row(
         "rolling_mean_7": rolling_7,
         "rolling_mean_30": rolling_30,
     }
+    row.update(compute_calendar_features(dt, get_cached_events()))
     return pd.Series(row)
 
 
@@ -136,7 +153,7 @@ def adjust_prediction_for_calendar(
 
 
 def predict_for_date(target_str: str) -> tuple[dict, int]:
-    model, feature_names, meta, historical = load_artifacts()
+    model, feature_names, meta, historical = _get_cached_artifacts()
     if model is None or historical is None:
         raise RuntimeError("Model not trained. Run train_model.py first.")
 

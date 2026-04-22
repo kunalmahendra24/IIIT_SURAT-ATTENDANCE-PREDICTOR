@@ -6,6 +6,8 @@ import AmbientParticles from "./AmbientParticles.jsx";
 import AttendanceChart from "./AttendanceChart.jsx";
 import FloatingNav from "./FloatingNav.jsx";
 import NotificationSettings from "./NotificationSettings.jsx";
+import BestDaysFinder from "./BestDaysFinder.jsx";
+import CalendarAdmin from "./CalendarAdmin.jsx";
 import PredictionCard from "./PredictionCard.jsx";
 import ScrollProgress from "./ScrollProgress.jsx";
 import { CardSurface, ScrollSection, Stagger, StaggerItem } from "./ScrollMotion.jsx";
@@ -246,10 +248,20 @@ export default function Dashboard() {
   const reduce = useReducedMotion();
   const [now, setNow] = useState(new Date());
   const [lastPrediction, setLastPrediction] = useState(null);
+  const [adminMode, setAdminMode] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      setAdminMode(params.get("admin") === "1");
+    } catch {
+      setAdminMode(false);
+    }
   }, []);
 
   return (
@@ -319,6 +331,24 @@ export default function Dashboard() {
             />
             <PredictionCard onPrediction={setLastPrediction} />
           </ScrollSection>
+
+          <ScrollSection id="best-days" delay={0.01}>
+            <SectionHeading
+              title="Best days"
+              subtitle="Rank the strongest dates in a window, factoring calendar context."
+            />
+            <BestDaysFinder />
+          </ScrollSection>
+
+          {adminMode ? (
+            <ScrollSection id="calendar-admin" delay={0.015}>
+              <SectionHeading
+                title="Admin"
+                subtitle="Upload and maintain the academic calendar used by rankings and features."
+              />
+              <CalendarAdmin />
+            </ScrollSection>
+          ) : null}
 
           <ScrollSection id="resources" delay={0.02}>
             <SectionHeading

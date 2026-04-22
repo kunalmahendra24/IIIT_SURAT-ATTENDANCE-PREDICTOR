@@ -14,12 +14,17 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from calendar_features import reload_calendar
+from calendar_service import extract_events_from_pdf, validate_calendar_payload
+from recommendation_service import find_best_days
+from retrain_service import restore_artifacts, retrain_with_safety_net
 from prediction_service import (
     DAY_NAMES,
     adjust_prediction_for_calendar,
     build_feature_row,
     load_artifacts,
     predict_for_date,
+    reload_artifacts,
     tree_predictions,
     _historical_series,
 )
@@ -29,6 +34,8 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 BACKEND_DIR = Path(__file__).resolve().parent
 SETTINGS_PATH = BACKEND_DIR / "email_settings.json"
 NOTIFICATION_LOG_PATH = BACKEND_DIR / "notification_log.json"
+CALENDAR_PATH = BACKEND_DIR / "calendar_events.json"
+CALENDAR_PREV_PATH = BACKEND_DIR / "calendar_events.prev.json"
 
 app = Flask(__name__)
 CORS(
@@ -98,6 +105,12 @@ def get_last_notification_time() -> str | None:
     except (json.JSONDecodeError, OSError):
         pass
     return None
+
+
+def _require_admin() -> bool:
+    expected = os.getenv("ADMIN_PASSWORD", "")
+    provided = request.headers.get("X-Admin-Password", "")
+    return bool(expected) and provided == expected
 
 
 @app.route("/api/predict", methods=["GET"])
@@ -238,6 +251,195 @@ def api_get_settings():
     safe["sender_password_set"] = bool(current.get("sender_password"))
     safe["last_notification_at"] = get_last_notification_time()
     return jsonify(safe)
+
+
+@app.route("/api/calendar/events", methods=["GET"])
+def api_calendar_events():
+    if not CALENDAR_PATH.exists():
+        return jsonify(
+            {
+                "academic_year": "",
+                "semester": "",
+                "events": [],
+                "last_updated": None,
+                "updated_by": None,
+            }
+        )
+    try:
+        data = json.loads(CALENDAR_PATH.read_text(encoding="utf-8"))
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/calendar/upload", methods=["POST"])
+def api_calendar_upload():
+    if not _require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Max 10 MB
+    if request.content_length is not None and request.content_length > 10 * 1024 * 1024:
+        return jsonify({"error": "File too large (max 10MB)"}), 413
+
+    if "pdf" not in request.files:
+        return jsonify({"error": 'Missing multipart file field "pdf"'}), 400
+    f = request.files["pdf"]
+    pdf_bytes = f.read()
+    if not pdf_bytes:
+        return jsonify({"error": "Empty file"}), 400
+    if len(pdf_bytes) > 10 * 1024 * 1024:
+        return jsonify({"error": "File too large (max 10MB)"}), 413
+
+    try:
+        extracted = extract_events_from_pdf(pdf_bytes)
+        warnings = extracted.pop("warnings", []) if isinstance(extracted, dict) else []
+        return jsonify({**extracted, "warnings": warnings})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/calendar/save", methods=["POST"])
+def api_calendar_save():
+    if not _require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({"error": "Invalid JSON body"}), 400
+
+    cleaned, warnings = validate_calendar_payload(body)
+
+    # Preserve the original schema fields if present (academic_year/semester already in cleaned).
+    saved = {
+        "academic_year": cleaned.get("academic_year", ""),
+        "semester": cleaned.get("semester", ""),
+        "events": cleaned.get("events", []),
+        "last_updated": datetime.utcnow().isoformat() + "Z",
+        "updated_by": "admin",
+    }
+
+    try:
+        if CALENDAR_PATH.exists():
+            CALENDAR_PREV_PATH.write_text(CALENDAR_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+        CALENDAR_PATH.write_text(json.dumps(saved, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        # Hot reload cached calendar data for feature computation & recommendations.
+        reload_calendar()
+
+        return jsonify({**saved, "warnings": warnings})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/calendar/retrain", methods=["POST"])
+def api_calendar_retrain():
+    if not _require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        out = retrain_with_safety_net()
+        # Match requested response shape (only include selected metric keys)
+        def pick(m: dict) -> dict:
+            return {k: m.get(k) for k in ("mae", "mdape", "wmape", "r2") if k in m}
+
+        resp = {
+            "status": out.get("status"),
+            "old_metrics": pick(out.get("old_metrics") or {}),
+            "new_metrics": pick(out.get("new_metrics") or {}),
+            "improvement": out.get("improvement") or {},
+            "trained_at": out.get("trained_at"),
+        }
+        if out.get("status") == "reverted":
+            resp["reverted_reason"] = out.get("reverted_reason", "Model reverted")
+        return jsonify(resp)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/calendar/rollback", methods=["POST"])
+def api_calendar_rollback():
+    if not _require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        # Restore model artifacts
+        restore_artifacts()
+    except FileNotFoundError as fe:
+        return jsonify({"error": str(fe)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    calendar_restored = False
+    try:
+        if CALENDAR_PREV_PATH.exists():
+            CALENDAR_PATH.write_text(CALENDAR_PREV_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+            calendar_restored = True
+    except Exception:
+        calendar_restored = False
+
+    # Hot reload caches
+    reload_artifacts()
+    reload_calendar()
+
+    restored_at = datetime.utcnow().isoformat() + "Z"
+    # Report restored metrics (best-effort)
+    restored_metrics = {}
+    try:
+        _m, _f, meta, _h = load_artifacts()
+        if meta and isinstance(meta, dict):
+            mm = meta.get("metrics", {}) or {}
+            restored_metrics = {k: mm.get(k) for k in ("mae", "mdape", "wmape", "r2") if k in mm}
+    except Exception:
+        restored_metrics = {}
+
+    return jsonify(
+        {
+            "status": "ok",
+            "restored_metrics": restored_metrics,
+            "calendar_restored": calendar_restored,
+            "restored_at": restored_at,
+        }
+    )
+
+
+@app.route("/api/best-days", methods=["GET"])
+def api_best_days():
+    start = request.args.get("start")
+    end = request.args.get("end")
+    if not start or not end:
+        return jsonify({"error": "Missing start or end (YYYY-MM-DD)"}), 400
+
+    top_n = request.args.get("top_n", "3")
+    min_attendance = request.args.get("min_attendance")
+    event_type = request.args.get("event_type", "event")
+    include_saturdays = request.args.get("include_saturdays", "false")
+
+    try:
+        top_n_i = int(top_n)
+        top_n_i = max(1, min(15, top_n_i))
+    except Exception:
+        top_n_i = 3
+
+    min_att_i: int | None
+    try:
+        min_att_i = int(min_attendance) if min_attendance not in (None, "") else None
+    except Exception:
+        min_att_i = None
+
+    include_sat = str(include_saturdays).lower() in ("1", "true", "yes", "on")
+
+    try:
+        out = find_best_days(
+            start=start,
+            end=end,
+            top_n=top_n_i,
+            min_attendance=min_att_i,
+            event_type=event_type,
+            include_saturdays=include_sat,
+        )
+        return jsonify(out)
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 def _maybe_start_scheduler():

@@ -11,7 +11,9 @@ Saves model, feature columns, training metadata, and historical daily series.
 """
 from __future__ import annotations
 
+import json
 import re
+import sys
 import zlib
 from datetime import datetime
 from pathlib import Path
@@ -24,11 +26,18 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+BACKEND_DIR = Path(__file__).resolve().parent.parent
 MODEL_DIR = Path(__file__).resolve().parent
 MODEL_PATH = MODEL_DIR / "attendance_model.pkl"
 FEATURE_COLS_PATH = MODEL_DIR / "feature_columns.pkl"
 META_PATH = MODEL_DIR / "training_meta.pkl"
 HISTORICAL_PATH = MODEL_DIR / "historical_daily.pkl"
+
+# Allow importing `backend/calendar_features.py` when running `python model/train_model.py`
+sys.path.insert(0, str(BACKEND_DIR))
+from calendar_features import compute_calendar_features  # noqa: E402
+
+CALENDAR_EVENTS_PATH = BACKEND_DIR / "calendar_events.json"
 
 # Feature columns used by the model (order matters)
 FEATURE_NAMES = [
@@ -47,7 +56,27 @@ FEATURE_NAMES = [
     "lag_7",
     "rolling_mean_7",
     "rolling_mean_30",
+    "is_holiday",
+    "is_exam_day",
+    "is_break",
+    "is_fest_day",
+    "days_to_nearest_holiday",
+    "days_after_holiday",
+    "days_to_next_exam",
+    "is_sandwich_day",
+    "is_post_break_monday",
 ]
+
+
+def load_calendar_events() -> list[dict]:
+    if not CALENDAR_EVENTS_PATH.exists():
+        return []
+    try:
+        data = json.loads(CALENDAR_EVENTS_PATH.read_text(encoding="utf-8"))
+        events = data.get("events", [])
+        return events if isinstance(events, list) else []
+    except (json.JSONDecodeError, OSError, AttributeError):
+        return []
 
 
 def _normalize_col(name: str) -> str:
@@ -764,6 +793,24 @@ def engineer_features(daily: pd.DataFrame) -> pd.DataFrame:
     last_day_of_month = (dt + pd.offsets.MonthEnd(0)).dt.day
     d["is_month_end"] = (dt.dt.day >= last_day_of_month - 2).astype(int)
 
+    events = load_calendar_events()
+    cal_rows = [compute_calendar_features(ts, events) for ts in dt]
+    cal_df = pd.DataFrame(cal_rows)
+    for col in (
+        "is_holiday",
+        "is_exam_day",
+        "is_break",
+        "is_fest_day",
+        "days_to_nearest_holiday",
+        "days_after_holiday",
+        "days_to_next_exam",
+        "is_sandwich_day",
+        "is_post_break_monday",
+    ):
+        if col not in cal_df.columns:
+            cal_df[col] = 0
+    d = pd.concat([d, cal_df], axis=1)
+
     return d
 
 
@@ -780,7 +827,8 @@ def compute_fallbacks(daily: pd.DataFrame) -> dict:
     }
 
 
-def main():
+def train() -> dict:
+    """Run training pipeline. Returns the metrics dict."""
     print("Loading and aggregating daily attendance...")
     daily = load_and_aggregate_daily()
     print(f"Records (days): {len(daily)}")
@@ -826,6 +874,15 @@ def main():
         else 0.0
     )
 
+    metrics = {
+        "mae": mae,
+        "rmse": rmse,
+        "r2": r2,
+        "mape": mape,
+        "mdape": mdape,
+        "wmape": wmape,
+    }
+
     print("\n--- Evaluation (hold-out) ---")
     print(f"MAE:    {mae:.2f}")
     print(f"RMSE:   {rmse:.2f}")
@@ -848,14 +905,7 @@ def main():
     training_meta = {
         "trained_at": datetime.utcnow().isoformat() + "Z",
         "n_records": int(len(train_df)),
-        "metrics": {
-            "mae": mae,
-            "rmse": rmse,
-            "r2": r2,
-            "mape": mape,
-            "mdape": mdape,
-            "wmape": wmape,
-        },
+        "metrics": metrics,
         "attendance_summary": {
             "min": float(daily["attendance"].min()),
             "max": float(daily["attendance"].max()),
@@ -873,6 +923,12 @@ def main():
     print(f"Saved features -> {FEATURE_COLS_PATH}")
     print(f"Saved meta -> {META_PATH}")
     print(f"Saved historical -> {HISTORICAL_PATH}")
+
+    return metrics
+
+
+def main():
+    train()
 
 
 if __name__ == "__main__":
