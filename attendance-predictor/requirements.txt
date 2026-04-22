@@ -7,3 +7,7 @@ scikit-learn
 joblib
 apscheduler
 python-dotenv
+google-generativeai
+pdfplumber
+pdf2image
+pillow
