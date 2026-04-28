@@ -34,12 +34,20 @@ no markdown fences, no commentary:
 }
 
 Rules:
-- Prefer specific types (exam/holiday/break/fest) over 'other'
-- affects_attendance should be true for holidays, breaks, exams,
-  fests; false for purely administrative events
-- If a date range is given (e.g. '20-22 Oct'), use date + end_date
-- Skip events you are not confident about
+- Extract EVERY event you can find. Do not be conservative.
+- Prefer specific types (exam/holiday/break/fest) over 'other', but use 'other' if unsure.
+- affects_attendance should be true for holidays, breaks, exams, fests; false for purely administrative events.
+- If a date range is given (e.g. '20-22 Oct'), use date + end_date.
+- Resolve year from the academic calendar header. If the calendar spans 2025-2026 and the month is Aug-Dec, use 2025; if Jan-Jul, use 2026.
+- If you genuinely cannot find any events, return an empty events list — but try hard first.
 """
+
+
+_MODEL_CHAIN = (
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+)
 
 
 def _alnum_ratio(s: str) -> float:
@@ -49,13 +57,15 @@ def _alnum_ratio(s: str) -> float:
     return alnum / max(1, len(s))
 
 
-def _gemini_model(temperature: float):
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
+def _ensure_api_key() -> None:
+    if not (os.getenv("GOOGLE_API_KEY") or "").strip():
         raise RuntimeError("GOOGLE_API_KEY is not set")
-    genai.configure(api_key=api_key)
+    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+
+def _build_model(name: str, temperature: float):
     return genai.GenerativeModel(
-        "gemini-2.5-flash",
+        name,
         generation_config={
             "response_mime_type": "application/json",
             "temperature": float(temperature),
@@ -76,12 +86,37 @@ def _extract_text_pdfplumber(pdf_bytes: bytes) -> str:
     return "\n".join(out).strip()
 
 
-def _images_from_pdf(pdf_bytes: bytes):
-    # pdf2image requires poppler installed; handle errors upstream.
-    from pdf2image import convert_from_bytes  # type: ignore
+def _gemini_call_with_fallback(content_parts: list[Any]) -> tuple[str, str, str | None]:
+    """
+    Try each model in the chain until one returns parseable JSON with events.
 
-    # Returns PIL Images.
-    return convert_from_bytes(pdf_bytes, dpi=150, first_page=1, last_page=10)
+    Returns (model_used, raw_text, error_message_or_none).
+    """
+    last_error: str | None = None
+    last_raw = ""
+    last_model = _MODEL_CHAIN[0]
+
+    for model_name in _MODEL_CHAIN:
+        last_model = model_name
+        try:
+            model = _build_model(model_name, temperature=0.1)
+            response = model.generate_content(content_parts)
+            raw = getattr(response, "text", None) or ""
+            last_raw = raw
+            try:
+                parsed = json.loads(raw)
+            except Exception as je:
+                last_error = f"{model_name}: invalid JSON ({je})"
+                continue
+            events = (parsed.get("events") if isinstance(parsed, dict) else None) or []
+            if isinstance(events, list) and len(events) > 0:
+                return model_name, raw, None
+            last_error = f"{model_name}: returned 0 events"
+        except Exception as e:
+            last_error = f"{model_name}: {e}"
+            continue
+
+    return last_model, last_raw, last_error
 
 
 def _validate_and_clean(extracted: dict) -> tuple[dict, list[str]]:
@@ -91,7 +126,14 @@ def _validate_and_clean(extracted: dict) -> tuple[dict, list[str]]:
         events_in = []
 
     kept: list[dict[str, Any]] = []
-    dropped = 0
+    drop_counts: dict[str, int] = {
+        "not_dict": 0,
+        "missing_name": 0,
+        "invalid_date": 0,
+        "invalid_end_date_kept": 0,
+        "end_before_start": 0,
+        "duplicate": 0,
+    }
 
     def norm_key(d: str, name: str) -> tuple[str, str]:
         return (d, (name or "").strip().lower())
@@ -100,17 +142,17 @@ def _validate_and_clean(extracted: dict) -> tuple[dict, list[str]]:
 
     for ev in events_in:
         if not isinstance(ev, dict):
-            dropped += 1
+            drop_counts["not_dict"] += 1
             continue
         raw_date = ev.get("date")
         raw_end = ev.get("end_date")
         name = str(ev.get("name") or "").strip()
         if not name:
-            dropped += 1
+            drop_counts["missing_name"] += 1
             continue
         ts = pd.to_datetime(raw_date, errors="coerce")
         if pd.isna(ts):
-            dropped += 1
+            drop_counts["invalid_date"] += 1
             continue
         ts = pd.Timestamp(ts).normalize()
 
@@ -118,16 +160,17 @@ def _validate_and_clean(extracted: dict) -> tuple[dict, list[str]]:
         if raw_end not in (None, ""):
             ets = pd.to_datetime(raw_end, errors="coerce")
             if pd.isna(ets):
-                dropped += 1
-                continue
-            end_ts = pd.Timestamp(ets).normalize()
-            if end_ts < ts:
-                dropped += 1
-                continue
+                drop_counts["invalid_end_date_kept"] += 1
+                end_ts = None
+            else:
+                end_ts = pd.Timestamp(ets).normalize()
+                if end_ts < ts:
+                    drop_counts["end_before_start"] += 1
+                    end_ts = None
 
         key = norm_key(ts.strftime("%Y-%m-%d"), name)
         if key in seen:
-            dropped += 1
+            drop_counts["duplicate"] += 1
             continue
         seen.add(key)
 
@@ -143,7 +186,12 @@ def _validate_and_clean(extracted: dict) -> tuple[dict, list[str]]:
         )
 
     if events_in:
-        removed_ratio = dropped / max(1, len(events_in))
+        total_dropped = sum(v for k, v in drop_counts.items() if k != "invalid_end_date_kept")
+        if total_dropped:
+            for reason, count in drop_counts.items():
+                if count > 0:
+                    warnings.append(f"Dropped {count} event(s): {reason}")
+        removed_ratio = total_dropped / max(1, len(events_in))
         if removed_ratio > 0.5:
             warnings.append("Validation removed more than 50% of extracted events; review carefully.")
 
@@ -157,50 +205,81 @@ def _validate_and_clean(extracted: dict) -> tuple[dict, list[str]]:
 
 def extract_events_from_pdf(pdf_bytes: bytes) -> dict:
     """
-    Extract academic calendar events from a PDF, using:
-    - pdfplumber text extraction first
-    - Gemini vision fallback for scanned/image PDFs
+    Extract academic calendar events from a PDF using Gemini.
 
-    Returns a dict: {academic_year, semester, events, warnings?}
+    Strategy:
+    1. Try pdfplumber to get text. If text is decent, send (text + prompt) to Gemini.
+    2. Otherwise (or if text path returns 0 events), send the PDF bytes directly to Gemini
+       with mime_type=application/pdf — works on Vercel (no poppler needed).
+    3. Walk a model fallback chain until one returns events.
+
+    Returns dict: {academic_year, semester, events, warnings?, path?, model_used?, model_event_count?}
     Does NOT save to disk.
     """
+    _ensure_api_key()
+
     warnings: list[str] = []
-    if not (os.getenv("GOOGLE_API_KEY") or "").strip():
-        raise RuntimeError("GOOGLE_API_KEY is not set")
+    diagnostics: dict[str, Any] = {}
 
     text = ""
     try:
         text = _extract_text_pdfplumber(pdf_bytes)
     except Exception as e:
-        warnings.append(f"pdfplumber extraction failed; trying vision fallback ({e})")
+        warnings.append(f"pdfplumber extraction failed; falling back to PDF input ({e})")
         text = ""
 
-    use_vision = (len(text) < 100) or (_alnum_ratio(text) < 0.3)
-    if use_vision:
-        warnings.append("Low-quality PDF text detected; using vision extraction.")
-        try:
-            imgs = _images_from_pdf(pdf_bytes)
-        except Exception as e:
-            raise RuntimeError(f"Vision fallback unavailable (pdf2image/poppler error): {e}") from e
+    text_quality_ok = len(text) >= 100 and _alnum_ratio(text) >= 0.3
 
-        model = _gemini_model(temperature=0.1)
-        content_parts: list[Any] = [_SCHEMA_PROMPT]
-        for img in list(imgs)[:10]:
-            content_parts.append(img)  # google-generativeai accepts PIL.Image
-        response = model.generate_content(content_parts)
-        raw_text = getattr(response, "text", None) or ""
-        extracted = json.loads(raw_text)
-    else:
-        model = _gemini_model(temperature=0.1)
-        prompt = _SCHEMA_PROMPT
-        response = model.generate_content([prompt, text])
-        raw_text = getattr(response, "text", None) or ""
-        extracted = json.loads(raw_text)
+    extracted: dict[str, Any] = {}
+    raw_text_used = ""
+    path_used = ""
+    model_used = ""
+
+    if text_quality_ok:
+        path_used = "text"
+        model_used, raw_text_used, err = _gemini_call_with_fallback([_SCHEMA_PROMPT, text])
+        if err:
+            warnings.append(f"Text path: {err}")
+        try:
+            extracted = json.loads(raw_text_used) if raw_text_used else {}
+        except Exception:
+            extracted = {}
+
+    if not extracted.get("events"):
+        path_used = "pdf"
+        warnings.append("Sending PDF directly to Gemini (image/scanned-friendly).")
+        pdf_part = {"mime_type": "application/pdf", "data": pdf_bytes}
+        model_used, raw_text_used, err = _gemini_call_with_fallback([_SCHEMA_PROMPT, pdf_part])
+        if err:
+            warnings.append(f"PDF path: {err}")
+        try:
+            extracted = json.loads(raw_text_used) if raw_text_used else {}
+        except Exception:
+            extracted = {}
+
+    diagnostics["path"] = path_used
+    diagnostics["model_used"] = model_used
+    model_events = (extracted.get("events") if isinstance(extracted, dict) else None) or []
+    diagnostics["model_event_count"] = len(model_events) if isinstance(model_events, list) else 0
+
+    if diagnostics["model_event_count"] == 0 and raw_text_used:
+        preview = raw_text_used.strip().replace("\n", " ")
+        if len(preview) > 400:
+            preview = preview[:400] + "..."
+        warnings.append(f"Model returned 0 events. Raw preview: {preview}")
 
     cleaned, val_warnings = _validate_and_clean(extracted if isinstance(extracted, dict) else {})
+    diagnostics["kept_event_count"] = len(cleaned.get("events", []))
     warnings.extend(val_warnings)
-    if warnings:
-        cleaned["warnings"] = warnings
+
+    summary = (
+        f"Path: {diagnostics['path']} | Model: {diagnostics['model_used']} | "
+        f"Returned: {diagnostics['model_event_count']} | Kept: {diagnostics['kept_event_count']}"
+    )
+    warnings.insert(0, summary)
+
+    cleaned.update(diagnostics)
+    cleaned["warnings"] = warnings
     return cleaned
 
 
@@ -211,4 +290,3 @@ def validate_calendar_payload(payload: dict) -> tuple[dict, list[str]]:
     """
     cleaned, warnings = _validate_and_clean(payload if isinstance(payload, dict) else {})
     return cleaned, warnings
-
