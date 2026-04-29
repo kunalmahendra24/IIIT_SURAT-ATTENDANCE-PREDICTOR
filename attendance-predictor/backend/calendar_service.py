@@ -245,7 +245,7 @@ def extract_events_from_pdf(pdf_bytes: bytes) -> dict:
         except Exception:
             extracted = {}
 
-    if not extracted.get("events"):
+    if not (isinstance(extracted, dict) and extracted.get("events")):
         path_used = "pdf"
         warnings.append("Sending PDF directly to Gemini (image/scanned-friendly).")
         pdf_part = {"mime_type": "application/pdf", "data": pdf_bytes}

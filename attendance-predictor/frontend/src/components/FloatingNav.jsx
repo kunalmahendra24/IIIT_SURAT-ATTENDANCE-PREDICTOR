@@ -10,6 +10,7 @@ function buildLinks() {
     { id: "resources", label: "Resources" },
     { id: "week", label: "7-day" },
     { id: "trends", label: "Trends" },
+    { id: "location", label: "Weather" },
     { id: "notify", label: "Alerts" }
   );
   return links;

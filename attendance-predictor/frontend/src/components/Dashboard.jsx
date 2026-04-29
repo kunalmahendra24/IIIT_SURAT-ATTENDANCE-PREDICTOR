@@ -5,6 +5,7 @@ import AmbientBackground from "./AmbientBackground.jsx";
 import AmbientParticles from "./AmbientParticles.jsx";
 import AttendanceChart from "./AttendanceChart.jsx";
 import FloatingNav from "./FloatingNav.jsx";
+import LocationSettings from "./LocationSettings.jsx";
 import NotificationSettings from "./NotificationSettings.jsx";
 import BestDaysFinder from "./BestDaysFinder.jsx";
 import CalendarAdmin from "./CalendarAdmin.jsx";
@@ -356,6 +357,14 @@ export default function Dashboard() {
               subtitle="Historical actuals with a short predicted tail. Resize the window to zoom."
             />
             <AttendanceChart />
+          </ScrollSection>
+
+          <ScrollSection id="location" delay={0.02}>
+            <SectionHeading
+              title="Location &amp; weather"
+              subtitle="Set campus coordinates — weather is fetched live and baked into every prediction."
+            />
+            <LocationSettings />
           </ScrollSection>
 
           <ScrollSection id="notify" delay={0.02}>

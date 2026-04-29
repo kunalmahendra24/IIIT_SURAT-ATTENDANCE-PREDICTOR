@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from calendar_features import compute_calendar_features, get_cached_events
+from weather_service import get_weather_for_date
 
 BACKEND_DIR = Path(__file__).resolve().parent
 MODEL_DIR = BACKEND_DIR / "model"
@@ -122,6 +123,14 @@ def build_feature_row(
         "rolling_mean_30": rolling_30,
     }
     row.update(compute_calendar_features(dt, get_cached_events()))
+
+    # Weather features — loaded from cache or live API; safe fallback built-in.
+    weather = get_weather_for_date(dt.strftime("%Y-%m-%d"))
+    row["temp_max"]           = float(weather.get("temp_max")           or 28.0)
+    row["precipitation"]      = float(weather.get("precipitation")      or 0.0)
+    row["is_rainy"]           = int(weather.get("is_rainy")             or 0)
+    row["is_extreme_weather"] = int(weather.get("is_extreme_weather")   or 0)
+
     return pd.Series(row)
 
 
@@ -138,17 +147,36 @@ def adjust_prediction_for_calendar(
     series: pd.Series,
 ) -> tuple[float, float, float]:
     """
-    No regular classes on Sunday — force zero. Saturday: damp high model output
-    (some campuses still have Saturday sessions, so we only cap, not zero).
+    Hard rules applied after the forest prediction:
+      - Sunday                → 0  (no classes)
+      - Calendar holiday/break → 0  (institution closed)
+      - Extreme weather day    → dampen by up to 40 %
+      - Saturday               → cap at 15 % of historical mean
     """
     d = pd.Timestamp(target).normalize()
+
+    # Sunday — always zero
     if d.dayofweek == 6:
         return 0.0, 0.0, 0.0
-    if int(row["is_weekend"]) == 1:
+
+    # Calendar holiday or break day — always zero
+    if int(row.get("is_holiday", 0)) == 1 or int(row.get("is_break", 0)) == 1:
+        return 0.0, 0.0, 0.0
+
+    # Extreme weather (heavy storms / flooding)
+    if int(row.get("is_extreme_weather", 0)) == 1:
+        factor = 0.60
+        mean_pred = mean_pred * factor
+        low       = low       * factor
+        high      = high      * factor
+
+    # Saturday — classes may run but at much lower turnout
+    if int(row.get("is_weekend", 0)) == 1:
         cap = max(5.0, float(series.mean()) * 0.15 if len(series) else 5.0)
         mean_pred = min(mean_pred, cap)
-        low = min(low, mean_pred)
-        high = min(high, mean_pred * 1.5)
+        low       = min(low,  mean_pred)
+        high      = min(high, mean_pred * 1.5)
+
     return mean_pred, low, high
 
 
@@ -181,13 +209,27 @@ def predict_for_date(target_str: str) -> tuple[dict, int]:
     historical_avg = float(same_dow.mean()) if len(same_dow) else float(hist["attendance"].mean())
 
     last_hist = series.index.max() if len(series) else None
+
+    # Weather summary for UI display
+    weather_data = get_weather_for_date(target.strftime("%Y-%m-%d"))
+
     out = {
         "date": target.strftime("%Y-%m-%d"),
         "predicted_attendance": pred_int,
         "confidence_range": {"low": low_i, "high": high_i},
         "day_of_week": DAY_NAMES[target.dayofweek],
         "is_weekend": bool(target.dayofweek >= 5),
+        "is_holiday": bool(int(row.get("is_holiday", 0)) == 1),
+        "is_break": bool(int(row.get("is_break", 0)) == 1),
         "historical_avg": round(historical_avg),
+        "weather": {
+            "temp_max":      weather_data.get("temp_max"),
+            "precipitation": weather_data.get("precipitation"),
+            "description":   weather_data.get("description", ""),
+            "icon":          weather_data.get("icon", "cloudy"),
+            "is_rainy":      bool(weather_data.get("is_rainy", 0)),
+            "is_extreme":    bool(weather_data.get("is_extreme_weather", 0)),
+        },
     }
     if last_hist is not None:
         days_ahead = (target.date() - last_hist.date()).days

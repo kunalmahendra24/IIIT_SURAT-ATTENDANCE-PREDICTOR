@@ -1,7 +1,392 @@
 {
-  "academic_year": "",
-  "semester": "",
-  "events": [],
-  "last_updated": "2026-04-22T12:35:58.815824Z",
-  "updated_by": "admin"
+  "academic_year": "2025-2026",
+  "semester": "Even",
+  "events": [
+    {
+      "date": "2026-01-26",
+      "end_date": null,
+      "name": "Republic Day",
+      "type": "holiday",
+      "affects_attendance": true,
+      "source_text": "1 26/01/2026 सोमवार/Monday गणतंत्र दिवस/Republic Day"
+    },
+    {
+      "date": "2026-03-04",
+      "end_date": null,
+      "name": "Holi",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "2 04/03/2026 बुधवार/Wednesday होली/ Holi"
+    },
+    {
+      "date": "2026-03-21",
+      "end_date": null,
+      "name": "Eid-ul-Fitr",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "3 21/03/2026 शनिवार/Saturday * ईद-उल-फितर/Idu'l Fitr"
+    },
+    {
+      "date": "2026-03-31",
+      "end_date": null,
+      "name": "Mahavir Jayanti",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "4 31/03/2026 मंगलवार / Tuesday महावीर जयंती/Mahavir Jayanti"
+    },
+    {
+      "date": "2026-04-03",
+      "end_date": null,
+      "name": "Good Friday",
+      "type": "holiday",
+      "affects_attendance": true,
+      "source_text": "5 03/04/2026 शुक्रवार/Friday गुड फ्राइडे/Good Friday"
+    },
+    {
+      "date": "2026-05-01",
+      "end_date": null,
+      "name": "Buddha Purnima",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "6 01/05/2026 शुक्रवार/Friday बुद्ध पूर्णिमा / Buddha Purnima"
+    },
+    {
+      "date": "2026-05-27",
+      "end_date": null,
+      "name": "Eid-ul-Zuha",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "7 27/05/2026 बुधवार/Wednesday ईद-उल-जुहा/Idu'L Zuha"
+    },
+    {
+      "date": "2026-06-26",
+      "end_date": null,
+      "name": "Muharram",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "8 26/06/2026 शुक्रवार/Friday *मुहर्रम/Muharram"
+    },
+    {
+      "date": "2026-08-15",
+      "end_date": null,
+      "name": "Independence Day",
+      "type": "holiday",
+      "affects_attendance": true,
+      "source_text": "9 15/08/2026 शनिवार/Saturday स्वतंत्रता दिवस/Independence Day"
+    },
+    {
+      "date": "2026-08-26",
+      "end_date": null,
+      "name": "Prophet Mohammad's Birthday (Id-E-Milad)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "10 26/08/2026 बुधवार/Wednesday पैगंबर मोहम्मद का जन्मदिन (ईद-ए-मिलाद)/Prophet Mohammad's Birthday (Id-E-Milad)"
+    },
+    {
+      "date": "2026-08-28",
+      "end_date": null,
+      "name": "Rakshabandhan",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "11 28/08/2026 शुक्रवार/Friday रक्षाबंधन / Rakshabandhan"
+    },
+    {
+      "date": "2026-09-14",
+      "end_date": null,
+      "name": "Ganesh Chaturthi / Vinayaka Chaturthi",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "12 14/09/2026 सोमवार/Monday गणेश चतुर्थी (विनायक चतुर्थी)/ Ganesh Chaturthi/ Vinayaka Chaturthi"
+    },
+    {
+      "date": "2026-10-02",
+      "end_date": null,
+      "name": "Mahatma Gandhi's Birthday",
+      "type": "holiday",
+      "affects_attendance": true,
+      "source_text": "13 02/10/2026 शुक्रवार/Friday महात्मा गांधी जयंती/Mahatma Gandhi's Birthday"
+    },
+    {
+      "date": "2026-10-20",
+      "end_date": null,
+      "name": "Dussehra (Vijay Dashmi)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "14 20/10/2026 मंगलवार / Tuesday दशहरा (विजय दशमी)/Dussehra (Vijay Dashmi)"
+    },
+    {
+      "date": "2026-11-08",
+      "end_date": null,
+      "name": "Diwali (Deepavali)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "15 08/11/2026 रविवार/Sunday दीवाली (दीपावली)/Diwali(Deepavali)"
+    },
+    {
+      "date": "2026-11-24",
+      "end_date": null,
+      "name": "Guru Nanak's Birthday",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "16 24/11/2026 मंगलवार / Tuesday गुरु नानक जयंती/Guru Nanak's Birthday"
+    },
+    {
+      "date": "2026-12-25",
+      "end_date": null,
+      "name": "Christmas Day",
+      "type": "holiday",
+      "affects_attendance": true,
+      "source_text": "17 25/12/2026 शुक्रवार/Friday क्रिसमस दिवस/Christmas Day"
+    },
+    {
+      "date": "2026-01-01",
+      "end_date": null,
+      "name": "New Year's Day",
+      "type": "holiday",
+      "affects_attendance": true,
+      "source_text": "01 01/01/2026 गुरुवार / Thursday नया साल/New Year's Day"
+    },
+    {
+      "date": "2026-01-03",
+      "end_date": null,
+      "name": "Hazrat Ali's Birthday",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "02 03/01/2026 शनिवार/Saturday हजरत अली का जन्मदिन/ Hazrat Ali's Birthday"
+    },
+    {
+      "date": "2026-01-14",
+      "end_date": null,
+      "name": "Makar Sankranti / Magha Bihu / Pongal",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "03 14/01/2026 बुधवार/Wednesday मकर संक्रांति / माघ बिहू / पोंगल /Makar Sankranti// Magha Bihu / Pongal"
+    },
+    {
+      "date": "2026-01-23",
+      "end_date": null,
+      "name": "Basant Panchami / Sri Panchami",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "04 23/01/2026 शुक्रवार / Friday बसंत पंचमी / श्री पंचमी / Basant Panchami / Sri Panchami"
+    },
+    {
+      "date": "2026-02-01",
+      "end_date": null,
+      "name": "Guru Ravidas's Birthday",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "05 01/02/2026 रविवार/Sunday गुरु रविदास का जन्मदिन/Guru Ravidas's Birthday"
+    },
+    {
+      "date": "2026-02-12",
+      "end_date": null,
+      "name": "Swami Dayananda Saraswati's Birthday",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "06 12/02/2026 गुरुवार / Thursday स्वामी दयानंद सरस्वती का जन्मदिन/Swami Dayananda Saraswati's Birthday"
+    },
+    {
+      "date": "2026-02-15",
+      "end_date": null,
+      "name": "Maha Shivaratri",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "07 15/02/2026 रविवार/Sunday महा शिवरात्रि / Maha Shivaratri"
+    },
+    {
+      "date": "2026-02-19",
+      "end_date": null,
+      "name": "Shivaji Jayanti",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "08 19/02/2026 गुरुवार / Thursday शिवाजी जयंती/Shivaji Jayanti"
+    },
+    {
+      "date": "2026-03-03",
+      "end_date": null,
+      "name": "Holika Dahan",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "09 03/03/2026 मंगलवार / Tuesday होलिका दहन/Holika Dahan,"
+    },
+    {
+      "date": "2026-03-03",
+      "end_date": null,
+      "name": "Dolyatra",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "10 03/03/2026 मंगलवार / Tuesday दोलयात्रा/Dolyatra"
+    },
+    {
+      "date": "2026-03-19",
+      "end_date": null,
+      "name": "Chaitra Shukladi / Gudi Padwa / Ugadi / Cheti Chand",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "11 19/03/2026 गुरुवार / Thursday चैत्र शुक्लादि / गुड़ी पड़वा / उगादी / चेत्री चांद/Chaitra Shukladi / Gudi Padwa / Ugadi / Cheti Chand"
+    },
+    {
+      "date": "2026-03-20",
+      "end_date": null,
+      "name": "Jamat-ul-Vida",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "12 20/03/2026 शुक्रवार / Friday जमात-उल-विदा/Jamat-ul-"
+    },
+    {
+      "date": "2026-04-05",
+      "end_date": null,
+      "name": "Easter Sunday",
+      "type": "holiday",
+      "affects_attendance": true,
+      "source_text": "13 05/04/2026 रविवार/Sunday ईस्टर रविवार/Easter Sunday"
+    },
+    {
+      "date": "2026-04-14",
+      "end_date": null,
+      "name": "Vaisakhi / Vishu / Meshadi (Tamil New year's Day)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "14 14/04/2026 मंगलवार / Tuesday बैसाखी / विशु/ मेशादी/ Vaisakhi / Vishu/Meshadi (तमिल नव वर्ष दिवस/Tamil New year's Day)"
+    },
+    {
+      "date": "2026-04-15",
+      "end_date": null,
+      "name": "Vaisakhadi (Bengal) / Bohag Bihu (Assam)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "15 15/04/2026 बुधवार/Wednesday बैसाखाड़ी (बंगाल) / बहाग बिहू (असम)/ Vaisakhadi (Bengal) / Bohag Bihu (Assam)"
+    },
+    {
+      "date": "2026-05-09",
+      "end_date": null,
+      "name": "Guru Rabindranath's Birthday",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "16 09/05/2026 शनिवार / Saturday गुरु रवींद्रनाथ का जन्मदिन/Guru Rabindranath's Birthday"
+    },
+    {
+      "date": "2026-07-16",
+      "end_date": null,
+      "name": "Rath Yatra",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "17 16/07/2026 गुरुवार / Thursday रथ यात्रा /Rath Yatra"
+    },
+    {
+      "date": "2026-08-15",
+      "end_date": null,
+      "name": "Parsi New Year's Day / Nauraj",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "18 15/08/2026 शनिवार / Saturday पारसी नववर्ष / नौरोज़/Parsi New Year's Day / Nauraj"
+    },
+    {
+      "date": "2026-08-26",
+      "end_date": null,
+      "name": "Onam or Thiru Onam Day",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "19 26/08/2026 बुधवार/Wednesday ओणम या थिरु ओणम दिवस - Onam or Thiru Onam Day"
+    },
+    {
+      "date": "2026-10-18",
+      "end_date": null,
+      "name": "Dussehra (Saptami)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "20 18/10/2026 रविवार/Sunday दशहरा (सप्तमी) - Dussehra (Saptami)"
+    },
+    {
+      "date": "2026-10-19",
+      "end_date": null,
+      "name": "Dussehra (Mahashtami)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "21 19/10/2026 सोमवार / Monday दशहरा (महाष्टमी) - Dussehra (Mahashtami)"
+    },
+    {
+      "date": "2026-10-20",
+      "end_date": null,
+      "name": "Dussehra (Mahanavmi)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "22 20/10/2026 मंगलवार / Tuesday दशहरा (महानवमी) - Dussehra (Mahanavmi)"
+    },
+    {
+      "date": "2026-10-26",
+      "end_date": null,
+      "name": "Maharishi Valmiki's Birthday",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "23 26/10/2026 सोमवार / Monday महर्षि वाल्मीकी का जन्मदिन - Maharishi Valmiki's Birthday"
+    },
+    {
+      "date": "2026-10-29",
+      "end_date": null,
+      "name": "Karaka Chaturthi (Karwa Chouth)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "24 29/10/2026 गुरुवार / Thursday कर्क चतुर्थी (करवा चौथ)/ Karaka Chaturthi (Karwa Chouth)"
+    },
+    {
+      "date": "2026-11-08",
+      "end_date": null,
+      "name": "Naraka Chaturdasi",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "25 08/11/2026 रविवार/Sunday नरक चतुर्दशी - Naraka Chaturdasi"
+    },
+    {
+      "date": "2026-11-09",
+      "end_date": null,
+      "name": "Govardhan Puja",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "26 09/11/2026 सोमवार / Monday गोवर्धन पूजा - Govardhan Puja"
+    },
+    {
+      "date": "2026-11-11",
+      "end_date": null,
+      "name": "Bhai Duj",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "27 11/11/2026 बुधवार/Wednesday भाई दूज - Bhai Duj"
+    },
+    {
+      "date": "2026-11-15",
+      "end_date": null,
+      "name": "Pratihar Shashthi or Surya Shashthi (Chhat Puja)",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "28 15/11/2026 रविवार/Sunday प्रतिहार षष्ठी या सूर्य षष्ठी (छठ पूजा) - Pratihar Shashthi or Surya Shashthi (Chhat Puja)"
+    },
+    {
+      "date": "2026-11-24",
+      "end_date": null,
+      "name": "Guru Teg Bahadur's Martyrdom Day",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "29 24/11/2026 मंगलवार / Tuesday गुरु तेग बहादुर का शहादत दिवस - Guru Teg Bahadur's Martyrdom Day"
+    },
+    {
+      "date": "2026-12-23",
+      "end_date": null,
+      "name": "Hazarat Ali's Birthday",
+      "type": "fest",
+      "affects_attendance": true,
+      "source_text": "30 23/12/2026 बुधवार/Wednesday हज़रत अली का जन्मदिन/Hazarat Ali's Birthday"
+    },
+    {
+      "date": "2026-12-24",
+      "end_date": null,
+      "name": "Christmas Eve",
+      "type": "holiday",
+      "affects_attendance": true,
+      "source_text": "31 24/12/2026 गुरुवार / Thursday क्रिसमस ईव - Christmas Eve"
+    }
+  ],
+  "last_updated": "2026-04-29T18:28:40.126751Z",
+  "updated_by": "dashboard"
 }

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const TYPE_OPTIONS = ["exam", "holiday", "break", "fest", "class_resumes", "other"];
@@ -84,11 +84,7 @@ function MetricRow({ label, oldV, newV, betterIsLower = false }) {
 }
 
 export default function CalendarAdmin() {
-  const [authChecked, setAuthChecked] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("");
-  const [loggingIn, setLoggingIn] = useState(false);
+  const [calendarReady, setCalendarReady] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [warnings, setWarnings] = useState([]);
 
@@ -109,9 +105,6 @@ export default function CalendarAdmin() {
   useEffect(() => {
     (async () => {
       try {
-        const me = await fetch("/api/admin/me", { credentials: "include" });
-        const meJson = await me.json().catch(() => ({}));
-        setAuthenticated(!!meJson?.authenticated);
         const res = await fetch("/api/calendar/events");
         const data = await res.json();
         if (!res.ok) return;
@@ -124,12 +117,10 @@ export default function CalendarAdmin() {
       } catch {
         /* optional */
       } finally {
-        setAuthChecked(true);
+        setCalendarReady(true);
       }
     })();
   }, []);
-
-  const authHeaders = useMemo(() => ({ "Content-Type": "application/json" }), []);
 
   const onPickFile = () => fileInputRef.current?.click();
 
@@ -139,42 +130,7 @@ export default function CalendarAdmin() {
     if (f) await uploadPdf(f);
   };
 
-  const login = async () => {
-    if (!username || !password) {
-      toast.error("Enter username and password");
-      return;
-    }
-    setLoggingIn(true);
-    try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        credentials: "include",
-        headers: authHeaders,
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
-      setAuthenticated(true);
-      toast.success("Admin login successful");
-    } catch (err) {
-      setAuthenticated(false);
-      toast.error(err.message || "Login failed");
-    } finally {
-      setLoggingIn(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
-    } finally {
-      setAuthenticated(false);
-      toast.message("Logged out");
-    }
-  };
-
   const uploadPdf = async (file) => {
-    if (!authenticated) return;
     if (!file || !file.name?.toLowerCase().endsWith(".pdf")) {
       toast.error("Please upload a PDF file");
       return;
@@ -187,7 +143,6 @@ export default function CalendarAdmin() {
       fd.append("pdf", file);
       const res = await fetch("/api/calendar/upload", {
         method: "POST",
-        credentials: "include",
         body: fd,
       });
       const data = await res.json();
@@ -236,7 +191,6 @@ export default function CalendarAdmin() {
   };
 
   const save = async () => {
-    if (!authenticated) return;
     setUploading(true);
     try {
       userOverrideRef.current = true;
@@ -247,7 +201,6 @@ export default function CalendarAdmin() {
       };
       const res = await fetch("/api/calendar/save", {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -269,12 +222,11 @@ export default function CalendarAdmin() {
   };
 
   const retrain = async () => {
-    if (!authenticated) return;
     setRetrainOpen(false);
     setRetraining(true);
     setRetrainResult(null);
     try {
-      const res = await fetch("/api/calendar/retrain", { method: "POST", credentials: "include" });
+      const res = await fetch("/api/calendar/retrain", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Retrain failed");
       setRetrainResult(data);
@@ -288,11 +240,10 @@ export default function CalendarAdmin() {
   };
 
   const rollback = async () => {
-    if (!authenticated) return;
     setRollbackOpen(false);
     setRetraining(true);
     try {
-      const res = await fetch("/api/calendar/rollback", { method: "POST", credentials: "include" });
+      const res = await fetch("/api/calendar/rollback", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Rollback failed");
       toast.success("Rollback complete");
@@ -305,10 +256,10 @@ export default function CalendarAdmin() {
     }
   };
 
-  if (!authChecked) {
+  if (!calendarReady) {
     return (
       <motion.section layout className="ui-panel relative overflow-hidden rounded-3xl p-6 sm:p-10">
-        <p className="text-sm text-slate-400">Loading admin session…</p>
+        <p className="text-sm text-slate-400">Loading calendar…</p>
       </motion.section>
     );
   }
@@ -331,59 +282,6 @@ export default function CalendarAdmin() {
         <p className="mt-3 max-w-2xl text-sm text-slate-400">
           Upload the institute calendar PDF, review extracted events, then save. Changes apply immediately.
         </p>
-
-        {!authenticated ? (
-          <div className="mt-6 rounded-3xl border border-white/10 bg-slate-950/40 p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Admin login</p>
-            <div className="mt-4 grid gap-4 lg:grid-cols-3">
-              <label className="flex flex-col text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Username
-                <input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="ui-input font-sans text-base font-medium"
-                  placeholder="admin"
-                />
-              </label>
-              <label className="flex flex-col text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Password
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="ui-input font-sans text-base font-medium"
-                  placeholder="••••••••"
-                />
-              </label>
-              <div className="flex items-end">
-                <motion.button
-                  type="button"
-                  onClick={login}
-                  disabled={loggingIn}
-                  whileHover={{ scale: loggingIn ? 1 : 1.03 }}
-                  whileTap={{ scale: loggingIn ? 1 : 0.98 }}
-                  className="ui-btn-primary w-full disabled:opacity-50"
-                >
-                  {loggingIn ? "Signing in…" : "Sign in"}
-                </motion.button>
-              </div>
-            </div>
-            <p className="mt-4 text-xs text-slate-500">
-              Configure `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `SECRET_KEY` in Vercel Environment Variables.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-4">
-            <p className="text-sm font-semibold text-emerald-100">Signed in as admin</p>
-            <button
-              type="button"
-              onClick={logout}
-              className="rounded-xl border border-white/10 bg-slate-950/40 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-white/20"
-            >
-              Logout
-            </button>
-          </div>
-        )}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
           <label className="flex flex-col text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -438,12 +336,12 @@ export default function CalendarAdmin() {
             <motion.button
               type="button"
               onClick={onPickFile}
-              disabled={uploading || !authenticated}
+              disabled={uploading}
               whileHover={{ scale: uploading ? 1 : 1.03 }}
               whileTap={{ scale: uploading ? 1 : 0.98 }}
               className="ui-btn-primary disabled:opacity-50"
             >
-              {!authenticated ? "Sign in to upload" : uploading ? "Working…" : "Browse PDF"}
+              {uploading ? "Working…" : "Browse PDF"}
             </motion.button>
           </div>
         </div>
@@ -472,7 +370,7 @@ export default function CalendarAdmin() {
           <motion.button
             type="button"
             onClick={save}
-            disabled={uploading || !dirty || !authenticated}
+            disabled={uploading || !dirty}
             whileHover={{ scale: uploading || !dirty ? 1 : 1.03 }}
             whileTap={{ scale: uploading || !dirty ? 1 : 0.98 }}
             className="ui-btn-primary disabled:opacity-50"
@@ -483,18 +381,16 @@ export default function CalendarAdmin() {
           <motion.button
             type="button"
             onClick={() => setRetrainOpen(true)}
-            disabled={uploading || retraining || !authenticated || dirty}
+            disabled={uploading || retraining || dirty}
             title={
-              !authenticated
-                ? "Sign in to admin"
-                : dirty
-                  ? "Save changes before retraining"
-                  : retraining
-                    ? "Retraining in progress..."
-                    : undefined
+              dirty
+                ? "Save changes before retraining"
+                : retraining
+                  ? "Retraining in progress..."
+                  : undefined
             }
-            whileHover={{ scale: uploading || retraining || !authenticated || dirty ? 1 : 1.03 }}
-            whileTap={{ scale: uploading || retraining || !authenticated || dirty ? 1 : 0.98 }}
+            whileHover={{ scale: uploading || retraining || dirty ? 1 : 1.03 }}
+            whileTap={{ scale: uploading || retraining || dirty ? 1 : 0.98 }}
             className="rounded-xl border border-teal-400/25 bg-teal-500/10 px-4 py-3 text-sm font-semibold text-teal-100 hover:border-teal-400/40 disabled:opacity-50"
           >
             {retraining ? "Retraining — up to 60s…" : "Retrain Model"}

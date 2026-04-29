@@ -1,0 +1,974 @@
+{
+  "2025-05-17|21.1702|72.8311": {
+    "temp_max": 34.7,
+    "precipitation": 1.6,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-05-18|21.1702|72.8311": {
+    "temp_max": 35.0,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-05-19|21.1702|72.8311": {
+    "temp_max": 35.0,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-05-20|21.1702|72.8311": {
+    "temp_max": 37.9,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-05-21|21.1702|72.8311": {
+    "temp_max": 37.5,
+    "precipitation": 2.0,
+    "weather_code": 55,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-05-22|21.1702|72.8311": {
+    "temp_max": 36.6,
+    "precipitation": 0.1,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-05-23|21.1702|72.8311": {
+    "temp_max": 39.2,
+    "precipitation": 5.8,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-05-24|21.1702|72.8311": {
+    "temp_max": 38.2,
+    "precipitation": 1.6,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-05-25|21.1702|72.8311": {
+    "temp_max": 35.3,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-05-26|21.1702|72.8311": {
+    "temp_max": 38.6,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-05-27|21.1702|72.8311": {
+    "temp_max": 33.9,
+    "precipitation": 6.4,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-05-28|21.1702|72.8311": {
+    "temp_max": 35.0,
+    "precipitation": 0.3,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-05-29|21.1702|72.8311": {
+    "temp_max": 33.5,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-05-30|21.1702|72.8311": {
+    "temp_max": 33.5,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-05-31|21.1702|72.8311": {
+    "temp_max": 32.8,
+    "precipitation": 0.4,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-01|21.1702|72.8311": {
+    "temp_max": 33.2,
+    "precipitation": 0.2,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-02|21.1702|72.8311": {
+    "temp_max": 33.3,
+    "precipitation": 8.1,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-03|21.1702|72.8311": {
+    "temp_max": 32.4,
+    "precipitation": 3.0,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-04|21.1702|72.8311": {
+    "temp_max": 31.9,
+    "precipitation": 0.3,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-05|21.1702|72.8311": {
+    "temp_max": 33.5,
+    "precipitation": 0.0,
+    "weather_code": 0,
+    "description": "Clear sky",
+    "icon": "clear",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-06|21.1702|72.8311": {
+    "temp_max": 35.6,
+    "precipitation": 0.0,
+    "weather_code": 1,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-07|21.1702|72.8311": {
+    "temp_max": 35.8,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-08|21.1702|72.8311": {
+    "temp_max": 36.2,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-09|21.1702|72.8311": {
+    "temp_max": 35.8,
+    "precipitation": 0.0,
+    "weather_code": 1,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-10|21.1702|72.8311": {
+    "temp_max": 35.8,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2026-04-03|21.1702|72.8311": {
+    "temp_max": 35.4,
+    "precipitation": 0.0,
+    "weather_code": 1,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-11|21.1702|72.8311": {
+    "temp_max": 37.5,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-12|21.1702|72.8311": {
+    "temp_max": 38.6,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-06-13|21.1702|72.8311": {
+    "temp_max": 34.8,
+    "precipitation": 3.1,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-14|21.1702|72.8311": {
+    "temp_max": 38.3,
+    "precipitation": 21.5,
+    "weather_code": 65,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-15|21.1702|72.8311": {
+    "temp_max": 37.4,
+    "precipitation": 3.9,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-16|21.1702|72.8311": {
+    "temp_max": 29.8,
+    "precipitation": 58.5,
+    "weather_code": 65,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-17|21.1702|72.8311": {
+    "temp_max": 30.1,
+    "precipitation": 14.4,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-18|21.1702|72.8311": {
+    "temp_max": 30.9,
+    "precipitation": 21.0,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-19|21.1702|72.8311": {
+    "temp_max": 30.3,
+    "precipitation": 15.0,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-20|21.1702|72.8311": {
+    "temp_max": 31.8,
+    "precipitation": 2.3,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-21|21.1702|72.8311": {
+    "temp_max": 30.5,
+    "precipitation": 8.5,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-22|21.1702|72.8311": {
+    "temp_max": 30.5,
+    "precipitation": 12.6,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-23|21.1702|72.8311": {
+    "temp_max": 27.0,
+    "precipitation": 53.0,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-24|21.1702|72.8311": {
+    "temp_max": 27.9,
+    "precipitation": 33.1,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-25|21.1702|72.8311": {
+    "temp_max": 30.1,
+    "precipitation": 25.1,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-26|21.1702|72.8311": {
+    "temp_max": 30.5,
+    "precipitation": 33.1,
+    "weather_code": 65,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-27|21.1702|72.8311": {
+    "temp_max": 30.4,
+    "precipitation": 13.9,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-28|21.1702|72.8311": {
+    "temp_max": 29.1,
+    "precipitation": 17.9,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-29|21.1702|72.8311": {
+    "temp_max": 29.5,
+    "precipitation": 15.9,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-06-30|21.1702|72.8311": {
+    "temp_max": 30.4,
+    "precipitation": 9.2,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-01|21.1702|72.8311": {
+    "temp_max": 30.5,
+    "precipitation": 9.2,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-02|21.1702|72.8311": {
+    "temp_max": 30.1,
+    "precipitation": 17.5,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-03|21.1702|72.8311": {
+    "temp_max": 29.3,
+    "precipitation": 19.1,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-04|21.1702|72.8311": {
+    "temp_max": 28.9,
+    "precipitation": 24.0,
+    "weather_code": 65,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-05|21.1702|72.8311": {
+    "temp_max": 29.1,
+    "precipitation": 25.5,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-06|21.1702|72.8311": {
+    "temp_max": 27.5,
+    "precipitation": 30.1,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-07|21.1702|72.8311": {
+    "temp_max": 29.1,
+    "precipitation": 4.7,
+    "weather_code": 55,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-08|21.1702|72.8311": {
+    "temp_max": 30.4,
+    "precipitation": 6.2,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-09|21.1702|72.8311": {
+    "temp_max": 28.9,
+    "precipitation": 9.4,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-10|21.1702|72.8311": {
+    "temp_max": 30.3,
+    "precipitation": 3.3,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-11|21.1702|72.8311": {
+    "temp_max": 30.2,
+    "precipitation": 13.7,
+    "weather_code": 65,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-12|21.1702|72.8311": {
+    "temp_max": 30.9,
+    "precipitation": 9.1,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-13|21.1702|72.8311": {
+    "temp_max": 29.6,
+    "precipitation": 23.8,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-14|21.1702|72.8311": {
+    "temp_max": 29.5,
+    "precipitation": 16.4,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-15|21.1702|72.8311": {
+    "temp_max": 31.7,
+    "precipitation": 2.0,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-16|21.1702|72.8311": {
+    "temp_max": 31.4,
+    "precipitation": 1.6,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-17|21.1702|72.8311": {
+    "temp_max": 31.5,
+    "precipitation": 0.9,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-07-18|21.1702|72.8311": {
+    "temp_max": 31.1,
+    "precipitation": 0.7,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-07-19|21.1702|72.8311": {
+    "temp_max": 30.7,
+    "precipitation": 1.9,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-20|21.1702|72.8311": {
+    "temp_max": 30.5,
+    "precipitation": 4.6,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-21|21.1702|72.8311": {
+    "temp_max": 29.9,
+    "precipitation": 6.6,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-22|21.1702|72.8311": {
+    "temp_max": 30.5,
+    "precipitation": 7.9,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-23|21.1702|72.8311": {
+    "temp_max": 29.6,
+    "precipitation": 10.5,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-24|21.1702|72.8311": {
+    "temp_max": 29.0,
+    "precipitation": 4.1,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-25|21.1702|72.8311": {
+    "temp_max": 30.0,
+    "precipitation": 17.6,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-26|21.1702|72.8311": {
+    "temp_max": 28.6,
+    "precipitation": 14.8,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-27|21.1702|72.8311": {
+    "temp_max": 29.9,
+    "precipitation": 12.0,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-28|21.1702|72.8311": {
+    "temp_max": 29.8,
+    "precipitation": 7.0,
+    "weather_code": 55,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-29|21.1702|72.8311": {
+    "temp_max": 28.5,
+    "precipitation": 5.9,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-30|21.1702|72.8311": {
+    "temp_max": 29.5,
+    "precipitation": 1.3,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-07-31|21.1702|72.8311": {
+    "temp_max": 28.6,
+    "precipitation": 1.9,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-01|21.1702|72.8311": {
+    "temp_max": 29.8,
+    "precipitation": 2.3,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-02|21.1702|72.8311": {
+    "temp_max": 30.2,
+    "precipitation": 1.4,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-03|21.1702|72.8311": {
+    "temp_max": 30.2,
+    "precipitation": 1.7,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-04|21.1702|72.8311": {
+    "temp_max": 30.0,
+    "precipitation": 1.6,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-05|21.1702|72.8311": {
+    "temp_max": 30.1,
+    "precipitation": 2.3,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-06|21.1702|72.8311": {
+    "temp_max": 30.6,
+    "precipitation": 0.7,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-08-07|21.1702|72.8311": {
+    "temp_max": 31.1,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-08-08|21.1702|72.8311": {
+    "temp_max": 31.5,
+    "precipitation": 0.0,
+    "weather_code": 3,
+    "description": "Partly cloudy",
+    "icon": "cloudy",
+    "is_rainy": 0,
+    "is_extreme_weather": 0
+  },
+  "2025-08-09|21.1702|72.8311": {
+    "temp_max": 31.0,
+    "precipitation": 1.5,
+    "weather_code": 61,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-10|21.1702|72.8311": {
+    "temp_max": 31.0,
+    "precipitation": 11.6,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-11|21.1702|72.8311": {
+    "temp_max": 31.0,
+    "precipitation": 1.9,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-12|21.1702|72.8311": {
+    "temp_max": 31.0,
+    "precipitation": 1.7,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-13|21.1702|72.8311": {
+    "temp_max": 31.3,
+    "precipitation": 3.0,
+    "weather_code": 53,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-14|21.1702|72.8311": {
+    "temp_max": 30.2,
+    "precipitation": 1.6,
+    "weather_code": 51,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2025-08-15|21.1702|72.8311": {
+    "temp_max": 30.5,
+    "precipitation": 11.5,
+    "weather_code": 63,
+    "description": "Drizzle / Rain",
+    "icon": "rain",
+    "is_rainy": 1,
+    "is_extreme_weather": 0
+  },
+  "2026-04-29|21.1702|72.8311": {
+    "temp_max": 36.2,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-04-30|21.1702|72.8311": {
+    "temp_max": 34.5,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-01|21.1702|72.8311": {
+    "temp_max": 34.0,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-02|21.1702|72.8311": {
+    "temp_max": 34.8,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-03|21.1702|72.8311": {
+    "temp_max": 34.4,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-04|21.1702|72.8311": {
+    "temp_max": 34.3,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-05|21.1702|72.8311": {
+    "temp_max": 33.8,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-06|21.1702|72.8311": {
+    "temp_max": 34.3,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-07|21.1702|72.8311": {
+    "temp_max": 35.8,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-08|21.1702|72.8311": {
+    "temp_max": 37.0,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-09|21.1702|72.8311": {
+    "temp_max": 38.2,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-10|21.1702|72.8311": {
+    "temp_max": 34.5,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-11|21.1702|72.8311": {
+    "temp_max": 33.8,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-12|21.1702|72.8311": {
+    "temp_max": 34.3,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-13|21.1702|72.8311": {
+    "temp_max": 34.9,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  },
+  "2026-05-14|21.1702|72.8311": {
+    "temp_max": 33.5,
+    "precipitation": 0.0,
+    "weather_code": 95,
+    "description": "Thunderstorm",
+    "icon": "storm",
+    "is_rainy": 0,
+    "is_extreme_weather": 1
+  }
+}

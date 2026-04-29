@@ -2,6 +2,15 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+const WEATHER_ICONS = {
+  clear:  "☀️",
+  cloudy: "⛅",
+  fog:    "🌫️",
+  rain:   "🌧️",
+  snow:   "❄️",
+  storm:  "⛈️",
+};
+
 function tomorrowISODate() {
   const d = new Date();
   d.setDate(d.getDate() + 1);
@@ -25,6 +34,30 @@ function useCountUp(target, duration = 800) {
     return () => cancelAnimationFrame(frame);
   }, [target, duration]);
   return v;
+}
+
+function WeatherPill({ weather }) {
+  if (!weather) return null;
+  const icon = WEATHER_ICONS[weather.icon] ?? "🌤️";
+  return (
+    <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs">
+      <span aria-hidden>{icon}</span>
+      <span className="text-slate-300 font-medium">{weather.description}</span>
+      {weather.temp_max != null && (
+        <span className="text-teal-400 font-semibold tabular-nums">
+          {weather.temp_max.toFixed(1)} °C
+        </span>
+      )}
+      {weather.is_rainy && (
+        <span className="text-sky-400">
+          {weather.precipitation != null ? `${weather.precipitation.toFixed(1)} mm` : "Rain"}
+        </span>
+      )}
+      {weather.is_extreme && (
+        <span className="font-bold text-rose-400">⚠ Extreme</span>
+      )}
+    </div>
+  );
 }
 
 const easeOut = [0.22, 1, 0.36, 1];
@@ -53,13 +86,14 @@ export default function PredictionCard({ onPrediction }) {
     }
   };
 
-  const hist = result?.historical_avg ?? 0;
-  const pred = result?.predicted_attendance ?? 0;
-  const diffPct =
-    hist > 0 ? Math.round(((pred - hist) / hist) * 1000) / 10 : 0;
+  const hist    = result?.historical_avg ?? 0;
+  const pred    = result?.predicted_attendance ?? 0;
+  const diffPct = hist > 0 ? Math.round(((pred - hist) / hist) * 1000) / 10 : 0;
   let tone = "text-amber-400";
-  if (diffPct > 3) tone = "text-emerald-400";
+  if (diffPct > 3)  tone = "text-emerald-400";
   if (diffPct < -3) tone = "text-rose-400";
+
+  const isHolidayOrBreak = result?.is_holiday || result?.is_break;
 
   return (
     <motion.section
@@ -104,8 +138,8 @@ export default function PredictionCard({ onPrediction }) {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.4 }}
           >
-            Select any date to estimate campus headcount. Confidence bands come from individual
-            trees in the ensemble.
+            Select any date to estimate campus headcount. Weather conditions and calendar
+            holidays are factored in automatically.
           </motion.p>
           <div className="mt-8 flex flex-wrap items-end gap-4">
             <label className="flex flex-col text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -162,9 +196,26 @@ export default function PredictionCard({ onPrediction }) {
               <div className="absolute right-4 top-4 rounded-full bg-teal-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-teal-300">
                 Result
               </div>
-              <div className="mt-6 flex flex-wrap items-end gap-2">
+
+              {/* Holiday / closure banner */}
+              {isHolidayOrBreak && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 mt-6 flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5"
+                >
+                  <span aria-hidden className="text-lg">🏖️</span>
+                  <p className="text-xs font-semibold text-amber-300">
+                    {result.is_break ? "Institution break / vacation" : "Public holiday"} — campus closed, attendance is 0.
+                  </p>
+                </motion.div>
+              )}
+
+              <div className="mt-4 flex flex-wrap items-end gap-2">
                 <motion.span
-                  className="font-display text-5xl font-extrabold tracking-tight text-white tabular-nums sm:text-7xl"
+                  className={`font-display text-5xl font-extrabold tracking-tight tabular-nums sm:text-7xl ${
+                    isHolidayOrBreak ? "text-slate-500" : "text-white"
+                  }`}
                   initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 180, damping: 16 }}
@@ -173,12 +224,16 @@ export default function PredictionCard({ onPrediction }) {
                 </motion.span>
                 <span className="mb-2 text-sm font-medium text-slate-400">students</span>
               </div>
-              <p className="mt-4 text-sm text-slate-400">
-                Confidence band{" "}
-                <span className="font-semibold text-teal-300">
-                  {result.confidence_range.low} – {result.confidence_range.high}
-                </span>
-              </p>
+
+              {!isHolidayOrBreak && (
+                <p className="mt-4 text-sm text-slate-400">
+                  Confidence band{" "}
+                  <span className="font-semibold text-teal-300">
+                    {result.confidence_range.low} – {result.confidence_range.high}
+                  </span>
+                </p>
+              )}
+
               <div className="mt-5 flex flex-wrap gap-2">
                 <span className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-bold text-slate-200">
                   {result.day_of_week}
@@ -188,11 +243,37 @@ export default function PredictionCard({ onPrediction }) {
                     Weekend
                   </span>
                 )}
+                {result.is_holiday && (
+                  <span className="rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-300">
+                    Public holiday
+                  </span>
+                )}
+                {result.is_break && (
+                  <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-300">
+                    Institute break
+                  </span>
+                )}
+                {result.weather?.is_extreme && (
+                  <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300">
+                    ⚠ Extreme weather
+                  </span>
+                )}
               </div>
-              <p className={`mt-5 text-sm font-semibold ${tone}`}>
-                {diffPct >= 0 ? "↑" : "↓"} {Math.abs(diffPct)}% vs same weekday historical avg (
-                {hist})
-              </p>
+
+              {/* Weather pill */}
+              {result.weather && (
+                <div className="mt-4">
+                  <WeatherPill weather={result.weather} />
+                </div>
+              )}
+
+              {!isHolidayOrBreak && (
+                <p className={`mt-5 text-sm font-semibold ${tone}`}>
+                  {diffPct >= 0 ? "↑" : "↓"} {Math.abs(diffPct)}% vs same weekday historical avg (
+                  {hist})
+                </p>
+              )}
+
               {result.warning && (
                 <p className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
                   {result.warning}
@@ -218,7 +299,7 @@ export default function PredictionCard({ onPrediction }) {
               </div>
               <p className="font-display text-lg font-semibold text-slate-300">Ready when you are</p>
               <p className="mt-2 max-w-xs text-sm text-slate-500">
-                Your predicted headcount and range will appear here.
+                Your predicted headcount, weather conditions, and confidence range will appear here.
               </p>
             </motion.div>
           )}

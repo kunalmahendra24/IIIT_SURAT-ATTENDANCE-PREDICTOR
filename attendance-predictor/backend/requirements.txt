@@ -11,3 +11,4 @@ google-generativeai
 pdfplumber
 pdf2image
 pillow
+requests

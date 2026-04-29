@@ -8,6 +8,12 @@ Layouts:
 - Snapshot-only Excel: student rows with attendance % or session counts and no dates —
   one synthetic mid-semester date per file (spread by path hash) so rollups still train.
 Saves model, feature columns, training metadata, and historical daily series.
+
+New in this version:
+- Holiday/break dates from calendar_events.json are injected as synthetic 0-attendance
+  rows so the model learns the holiday → 0 pattern directly.
+- Weather features (temperature, precipitation, rain flags) are added using the
+  Open-Meteo free API via weather_service.py.
 """
 from __future__ import annotations
 
@@ -25,22 +31,24 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+DATA_DIR    = Path(__file__).resolve().parent.parent / "data"
 BACKEND_DIR = Path(__file__).resolve().parent.parent
-MODEL_DIR = Path(__file__).resolve().parent
-MODEL_PATH = MODEL_DIR / "attendance_model.pkl"
+MODEL_DIR   = Path(__file__).resolve().parent
+MODEL_PATH        = MODEL_DIR / "attendance_model.pkl"
 FEATURE_COLS_PATH = MODEL_DIR / "feature_columns.pkl"
-META_PATH = MODEL_DIR / "training_meta.pkl"
-HISTORICAL_PATH = MODEL_DIR / "historical_daily.pkl"
+META_PATH         = MODEL_DIR / "training_meta.pkl"
+HISTORICAL_PATH   = MODEL_DIR / "historical_daily.pkl"
 
-# Allow importing `backend/calendar_features.py` when running `python model/train_model.py`
+# Allow importing backend modules when running `python model/train_model.py`
 sys.path.insert(0, str(BACKEND_DIR))
 from calendar_features import compute_calendar_features  # noqa: E402
+from weather_service import get_weather_for_range         # noqa: E402
 
 CALENDAR_EVENTS_PATH = BACKEND_DIR / "calendar_events.json"
 
-# Feature columns used by the model (order matters)
+# Feature columns used by the model (order matters — must match inference)
 FEATURE_NAMES = [
+    # Time
     "day_of_week",
     "day_of_month",
     "month",
@@ -52,10 +60,12 @@ FEATURE_NAMES = [
     "day_of_year",
     "is_month_start",
     "is_month_end",
+    # Lagged attendance
     "lag_1",
     "lag_7",
     "rolling_mean_7",
     "rolling_mean_30",
+    # Calendar
     "is_holiday",
     "is_exam_day",
     "is_break",
@@ -65,8 +75,17 @@ FEATURE_NAMES = [
     "days_to_next_exam",
     "is_sandwich_day",
     "is_post_break_monday",
+    # Weather (new)
+    "temp_max",
+    "precipitation",
+    "is_rainy",
+    "is_extreme_weather",
 ]
 
+
+# ---------------------------------------------------------------------------
+# Calendar helpers
+# ---------------------------------------------------------------------------
 
 def load_calendar_events() -> list[dict]:
     if not CALENDAR_EVENTS_PATH.exists():
@@ -78,6 +97,17 @@ def load_calendar_events() -> list[dict]:
     except (json.JSONDecodeError, OSError, AttributeError):
         return []
 
+
+def _holiday_dates_from_calendar(events: list[dict]) -> set[pd.Timestamp]:
+    """Return all dates tagged as holiday / break / vacation."""
+    from calendar_features import _expand_events  # local import to avoid circular
+    cal = _expand_events(events)
+    return cal.holiday_dates | cal.break_dates
+
+
+# ---------------------------------------------------------------------------
+# Data parsing helpers (unchanged from original)
+# ---------------------------------------------------------------------------
 
 def _normalize_col(name: str) -> str:
     return re.sub(r"\s+", "_", str(name).strip().lower())
@@ -173,35 +203,14 @@ def _parse_dates(series: pd.Series) -> pd.Series:
 
 
 _MONTH_TOKEN_TO_NUM: dict[str, int] = {
-    "jan": 1,
-    "january": 1,
-    "feb": 2,
-    "february": 2,
-    "mar": 3,
-    "march": 3,
-    "apr": 4,
-    "april": 4,
-    "may": 5,
-    "jun": 6,
-    "june": 6,
-    "jul": 7,
-    "july": 7,
-    "aug": 8,
-    "august": 8,
-    "sep": 9,
-    "sept": 9,
-    "september": 9,
-    "oct": 10,
-    "october": 10,
-    "nov": 11,
-    "november": 11,
-    "dec": 12,
-    "december": 12,
+    "jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
+    "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6, "jul": 7, "july": 7,
+    "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9,
+    "oct": 10, "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12,
 }
 
 _SR_NO_RE = re.compile(
-    r"^(sr\.?\s*no\.?|s\.?\s*n\.?|serial\s*no\.?|sl\.?\s*no\.?)$",
-    re.I,
+    r"^(sr\.?\s*no\.?|s\.?\s*n\.?|serial\s*no\.?|sl\.?\s*no\.?)$", re.I,
 )
 
 
@@ -238,7 +247,6 @@ def _day_from_cell(v: object) -> int | None:
 
 
 def _parse_academic_year_start(raw: pd.DataFrame) -> int | None:
-    """First year from '2025-2026' style banner text."""
     pat = re.compile(r"(20\d{2})\s*[-/]\s*(20\d{2})")
     for r in range(min(15, len(raw))):
         for c in range(min(8, raw.shape[1])):
@@ -268,12 +276,8 @@ def _find_student_header_row(raw: pd.DataFrame) -> int | None:
                 if any(
                     k in n1
                     for k in (
-                        "enrolment_no",
-                        "enrollment_no",
-                        "enrollment_number",
-                        "roll_no",
-                        "reg_no",
-                        "registration_no",
+                        "enrolment_no", "enrollment_no", "enrollment_number",
+                        "roll_no", "reg_no", "registration_no",
                     )
                 ):
                     return i
@@ -293,14 +297,12 @@ def _forward_months_for_row(row: pd.Series, ncols: int) -> list[int | None]:
 
 
 def _year_for_calendar_month(month: int, y_start: int) -> int:
-    """Odd sem: Aug–Dec -> y_start; Jan–Jul -> y_start + 1."""
     return y_start if month >= 8 else y_start + 1
 
 
 def _locate_day_header_row(
     raw: pd.DataFrame, header_row: int, ncols: int
 ) -> tuple[int | None, int | None]:
-    """Row index and first column index where session day numbers live."""
     for dr in (0, -1):
         r = header_row + dr
         if r < 0:
@@ -331,11 +333,6 @@ def _pick_month_row(raw: pd.DataFrame, day_row: int, ncols: int) -> int | None:
 
 
 def _try_wide_format_iiit(raw: pd.DataFrame) -> pd.DataFrame | None:
-    """
-    IIIT-style grid: banner rows, optional month row, day-of-month row, then
-    Sr. No / Enrollment / Name and P/A (or 1/0) per session column.
-    Returns a DataFrame with columns date, attendance (present count per day).
-    """
     nrows, ncols = raw.shape
     if nrows < 10 or ncols < 6:
         return None
@@ -429,7 +426,6 @@ def _year_from_path(path: Path) -> int | None:
 
 
 def _snapshot_date_for_file(path: Path, y_start: int) -> pd.Timestamp:
-    """Deterministic pseudo-date for snapshot-only exports (spread across odd sem)."""
     key = str(path.resolve()).casefold().encode("utf-8", errors="ignore")
     h = zlib.adler32(key) & 0xFFFFFFFF
     offset_days = int(h % 77)
@@ -438,7 +434,6 @@ def _snapshot_date_for_file(path: Path, y_start: int) -> pd.Timestamp:
 
 
 def _find_labeled_header_row(raw: pd.DataFrame) -> int | None:
-    """Rows like Email / Attendance / Attendance Percent (no Sr. No in col 0)."""
     nrows, ncols = raw.shape
     for r in range(min(35, nrows)):
         parts = []
@@ -453,7 +448,6 @@ def _find_labeled_header_row(raw: pd.DataFrame) -> int | None:
 
 
 def _header_cell_lookup(raw: pd.DataFrame, header_row: int, col: int) -> str:
-    """Label for a column: use header_row cell, else nearest non-empty row above."""
     h = raw.iat[header_row, col]
     if pd.notna(h) and str(h).strip():
         return str(h).strip()
@@ -466,7 +460,6 @@ def _header_cell_lookup(raw: pd.DataFrame, header_row: int, col: int) -> str:
 
 
 def _df_from_raw_header(raw: pd.DataFrame, header_row: int) -> pd.DataFrame:
-    """Use header_row labels; fill blanks from rows above (merged IIIT headers)."""
     ncols = raw.shape[1]
     hdr = raw.iloc[header_row, :ncols]
     names: list[str] = []
@@ -491,7 +484,6 @@ def _df_from_raw_header(raw: pd.DataFrame, header_row: int) -> pd.DataFrame:
 
 
 def _looks_like_wide_numeric_headers(df: pd.DataFrame) -> bool:
-    """Avoid treating P/A grid tables as snapshot summaries."""
     n = 0
     for c in df.columns:
         s = str(c).replace("_", "").strip()
@@ -542,10 +534,6 @@ def _snapshot_metric_from_df(df: pd.DataFrame) -> float | None:
 def _try_registration_lecture_lab_snapshot(
     raw: pd.DataFrame, path: Path
 ) -> pd.DataFrame | None:
-    """
-    Rows under Registration / LECTURE / LAB with multiple 'Present' count columns
-    (e.g. CS-754 style); sum all present counts across those columns.
-    """
     nrows, ncols = raw.shape
     for r in range(min(35, nrows - 3)):
         blob = " ".join(
@@ -582,10 +570,6 @@ def _try_registration_lecture_lab_snapshot(
 
 
 def _try_snapshot_from_raw(raw: pd.DataFrame, path: Path) -> pd.DataFrame | None:
-    """
-    One row per sheet: total present-equivalents (sum of %/100 or sum of session counts)
-    on a synthetic calendar date derived from academic year + file path.
-    """
     reg_lab = _try_registration_lecture_lab_snapshot(raw, path)
     if reg_lab is not None:
         return reg_lab
@@ -611,20 +595,17 @@ def _try_snapshot_from_raw(raw: pd.DataFrame, path: Path) -> pd.DataFrame | None
 
 
 def _read_table(path: Path) -> pd.DataFrame:
-    """Load a single CSV or Excel file into a DataFrame (first sheet for Excel)."""
     suffix = path.suffix.lower()
     if suffix == ".csv":
         return pd.read_csv(path)
     if suffix in (".xlsx", ".xlsm"):
         return pd.read_excel(path, sheet_name=0, engine="openpyxl")
     if suffix == ".xls":
-        # Legacy Excel; may require `xlrd` — `pip install xlrd`
         return pd.read_excel(path, sheet_name=0)
     raise ValueError(f"Unsupported format: {path.suffix}")
 
 
 def _skip_path(path: Path) -> bool:
-    """Ignore macOS metadata, Excel lock files, hidden junk."""
     parts = {p.lower() for p in path.parts}
     if "__macosx" in parts:
         return True
@@ -635,7 +616,6 @@ def _skip_path(path: Path) -> bool:
 
 
 def _collect_data_paths() -> list[Path]:
-    """All CSV/Excel files under data/, including subfolders."""
     patterns = ("**/*.csv", "**/*.xlsx", "**/*.xlsm", "**/*.xls")
     seen: set[Path] = set()
     out: list[Path] = []
@@ -655,7 +635,12 @@ def _collect_data_paths() -> list[Path]:
 
 
 def load_and_aggregate_daily() -> pd.DataFrame:
-    """Load all CSV/Excel files from data/ (recursively), return one row per date."""
+    """Load all CSV/Excel files from data/ (recursively), return one row per date.
+
+    Also injects synthetic zero-attendance rows for all calendar holiday and break
+    dates that are NOT already present in the aggregated data, teaching the model
+    that the institution is closed on those days.
+    """
     if not DATA_DIR.exists():
         raise FileNotFoundError(f"Data directory not found: {DATA_DIR}")
 
@@ -765,82 +750,135 @@ def load_and_aggregate_daily() -> pd.DataFrame:
         .reset_index(drop=True)
     )
     all_daily = all_daily.drop_duplicates(subset=["date"], keep="last")
-    # Impute outliers / missing via median of column (only attendance)
+
     med = all_daily["attendance"].median()
     all_daily["attendance"] = all_daily["attendance"].fillna(med)
+
+    # ── Inject synthetic zero-attendance rows for calendar holidays/breaks ──
+    events = load_calendar_events()
+    if events:
+        holiday_dates = _holiday_dates_from_calendar(events)
+        existing_dates: set[pd.Timestamp] = set(all_daily["date"])
+        synthetic_rows = []
+        for hd in sorted(holiday_dates):
+            if hd not in existing_dates:
+                # Only inject if the holiday falls within (or near) the training window
+                # to avoid polluting the dataset with distant future/past zeros.
+                if not all_daily.empty:
+                    dmin = all_daily["date"].min()
+                    dmax = all_daily["date"].max()
+                    margin = pd.Timedelta(days=30)
+                    if dmin - margin <= hd <= dmax + margin:
+                        synthetic_rows.append({"date": hd, "attendance": 0.0})
+                else:
+                    synthetic_rows.append({"date": hd, "attendance": 0.0})
+        if synthetic_rows:
+            print(f"Injecting {len(synthetic_rows)} synthetic holiday zero row(s)")
+            syn_df = pd.DataFrame(synthetic_rows)
+            all_daily = pd.concat([all_daily, syn_df], ignore_index=True)
+            all_daily = (
+                all_daily.sort_values("date")
+                .drop_duplicates(subset=["date"], keep="first")
+                .reset_index(drop=True)
+            )
+
     return all_daily
 
 
+def _fetch_training_weather(daily: pd.DataFrame) -> dict[str, dict]:
+    """Batch-fetch weather for all dates in the training DataFrame."""
+    if daily.empty:
+        return {}
+    dates = pd.to_datetime(daily["date"])
+    start = dates.min().strftime("%Y-%m-%d")
+    end   = dates.max().strftime("%Y-%m-%d")
+    print(f"Fetching weather data for {start} → {end} …")
+    try:
+        weather_map = get_weather_for_range(start, end)
+        print(f"  Retrieved weather for {len(weather_map)} dates.")
+        return weather_map
+    except Exception as e:
+        print(f"  Warning: weather fetch failed ({e}); using neutral defaults.")
+        return {}
+
+
 def engineer_features(daily: pd.DataFrame) -> pd.DataFrame:
-    """Add time-series features; daily must be sorted by date with columns date, attendance."""
+    """Add time-series + calendar + weather features; daily must be sorted by date."""
     d = daily.copy().sort_values("date").reset_index(drop=True)
-    d["lag_1"] = d["attendance"].shift(1)
-    d["lag_7"] = d["attendance"].shift(7)
-    d["rolling_mean_7"] = d["attendance"].rolling(window=7, min_periods=1).mean()
-    d["rolling_mean_30"] = d["attendance"].rolling(window=30, min_periods=1).mean()
+    d["lag_1"]          = d["attendance"].shift(1)
+    d["lag_7"]          = d["attendance"].shift(7)
+    d["rolling_mean_7"] = d["attendance"].rolling(window=7,  min_periods=1).mean()
+    d["rolling_mean_30"]= d["attendance"].rolling(window=30, min_periods=1).mean()
 
     dt = pd.to_datetime(d["date"])
-    d["day_of_week"] = dt.dt.dayofweek
-    d["day_of_month"] = dt.dt.day
-    d["month"] = dt.dt.month
-    d["week_of_year"] = dt.dt.isocalendar().week.astype(int)
-    d["is_weekend"] = (dt.dt.dayofweek >= 5).astype(int)
-    d["is_monday"] = (dt.dt.dayofweek == 0).astype(int)
-    d["is_friday"] = (dt.dt.dayofweek == 4).astype(int)
-    d["quarter"] = dt.dt.quarter
-    d["day_of_year"] = dt.dt.dayofyear
-    d["is_month_start"] = (dt.dt.day <= 3).astype(int)
-    last_day_of_month = (dt + pd.offsets.MonthEnd(0)).dt.day
-    d["is_month_end"] = (dt.dt.day >= last_day_of_month - 2).astype(int)
+    d["day_of_week"]   = dt.dt.dayofweek
+    d["day_of_month"]  = dt.dt.day
+    d["month"]         = dt.dt.month
+    d["week_of_year"]  = dt.dt.isocalendar().week.astype(int)
+    d["is_weekend"]    = (dt.dt.dayofweek >= 5).astype(int)
+    d["is_monday"]     = (dt.dt.dayofweek == 0).astype(int)
+    d["is_friday"]     = (dt.dt.dayofweek == 4).astype(int)
+    d["quarter"]       = dt.dt.quarter
+    d["day_of_year"]   = dt.dt.dayofyear
+    d["is_month_start"]= (dt.dt.day <= 3).astype(int)
+    last_day_of_month  = (dt + pd.offsets.MonthEnd(0)).dt.day
+    d["is_month_end"]  = (dt.dt.day >= last_day_of_month - 2).astype(int)
 
     events = load_calendar_events()
     cal_rows = [compute_calendar_features(ts, events) for ts in dt]
     cal_df = pd.DataFrame(cal_rows)
     for col in (
-        "is_holiday",
-        "is_exam_day",
-        "is_break",
-        "is_fest_day",
-        "days_to_nearest_holiday",
-        "days_after_holiday",
-        "days_to_next_exam",
-        "is_sandwich_day",
-        "is_post_break_monday",
+        "is_holiday", "is_exam_day", "is_break", "is_fest_day",
+        "days_to_nearest_holiday", "days_after_holiday", "days_to_next_exam",
+        "is_sandwich_day", "is_post_break_monday",
     ):
         if col not in cal_df.columns:
             cal_df[col] = 0
     d = pd.concat([d, cal_df], axis=1)
 
+    # Weather features
+    weather_map = _fetch_training_weather(d)
+    weather_rows = []
+    for ts in dt:
+        ds = ts.strftime("%Y-%m-%d")
+        w  = weather_map.get(ds, {})
+        weather_rows.append({
+            "temp_max":           float(w.get("temp_max")           or 28.0),
+            "precipitation":      float(w.get("precipitation")      or  0.0),
+            "is_rainy":           int(w.get("is_rainy")             or  0),
+            "is_extreme_weather": int(w.get("is_extreme_weather")   or  0),
+        })
+    weather_df = pd.DataFrame(weather_rows)
+    d = pd.concat([d, weather_df], axis=1)
+
     return d
 
 
 def compute_fallbacks(daily: pd.DataFrame) -> dict:
-    """Scalars for prediction when lags/rolling are NaN."""
     att = daily["attendance"]
     return {
-        "historical_mean": float(att.mean()),
-        "historical_median": float(att.median()),
-        "lag_1_fallback": float(att.iloc[-1]) if len(att) else 0.0,
-        "lag_7_fallback": float(att.iloc[-7]) if len(att) >= 7 else float(att.mean()),
+        "historical_mean":    float(att.mean()),
+        "historical_median":  float(att.median()),
+        "lag_1_fallback":     float(att.iloc[-1]) if len(att) else 0.0,
+        "lag_7_fallback":     float(att.iloc[-7]) if len(att) >= 7 else float(att.mean()),
         "rolling_7_fallback": float(att.tail(7).mean()),
-        "rolling_30_fallback": float(att.tail(min(30, len(att))).mean()),
+        "rolling_30_fallback":float(att.tail(min(30, len(att))).mean()),
     }
 
 
 def train() -> dict:
-    """Run training pipeline. Returns the metrics dict."""
-    print("Loading and aggregating daily attendance...")
+    """Run full training pipeline. Returns the metrics dict."""
+    print("Loading and aggregating daily attendance…")
     daily = load_and_aggregate_daily()
-    print(f"Records (days): {len(daily)}")
+    print(f"Records (days, including synthetic holidays): {len(daily)}")
 
-    featured = engineer_features(daily)
-    # Drop rows where core targets were used for training — keep rows with any NaN in lags filled later for training
-    train_df = featured.dropna(subset=["attendance"]).copy()
-    fb = compute_fallbacks(daily)
-    train_df["lag_1"] = train_df["lag_1"].fillna(fb["lag_1_fallback"])
-    train_df["lag_7"] = train_df["lag_7"].fillna(fb["lag_7_fallback"])
+    featured  = engineer_features(daily)
+    train_df  = featured.dropna(subset=["attendance"]).copy()
+    fb        = compute_fallbacks(daily)
+    train_df["lag_1"]          = train_df["lag_1"].fillna(fb["lag_1_fallback"])
+    train_df["lag_7"]          = train_df["lag_7"].fillna(fb["lag_7_fallback"])
     train_df["rolling_mean_7"] = train_df["rolling_mean_7"].fillna(fb["rolling_7_fallback"])
-    train_df["rolling_mean_30"] = train_df["rolling_mean_30"].fillna(fb["rolling_30_fallback"])
+    train_df["rolling_mean_30"]= train_df["rolling_mean_30"].fillna(fb["rolling_30_fallback"])
 
     X = train_df[FEATURE_NAMES]
     y = train_df["attendance"]
@@ -860,33 +898,25 @@ def train() -> dict:
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
 
-    mae = mean_absolute_error(y_test, pred)
-    rmse = float(np.sqrt(mean_squared_error(y_test, pred)))
-    r2 = r2_score(y_test, pred)
+    mae   = mean_absolute_error(y_test, pred)
+    rmse  = float(np.sqrt(mean_squared_error(y_test, pred)))
+    r2    = r2_score(y_test, pred)
     y_abs = np.maximum(np.abs(y_test.values), 1.0)
-    ape = np.abs(y_test.values - pred) / y_abs
-    mape = float(np.mean(ape) * 100)
+    ape   = np.abs(y_test.values - pred) / y_abs
+    mape  = float(np.mean(ape) * 100)
     mdape = float(np.median(ape) * 100)
     y_sum = float(np.sum(np.abs(y_test.values)))
     wmape = (
         float(np.sum(np.abs(y_test.values - pred)) / y_sum * 100)
-        if y_sum > 0
-        else 0.0
+        if y_sum > 0 else 0.0
     )
 
-    metrics = {
-        "mae": mae,
-        "rmse": rmse,
-        "r2": r2,
-        "mape": mape,
-        "mdape": mdape,
-        "wmape": wmape,
-    }
+    metrics = {"mae": mae, "rmse": rmse, "r2": r2, "mape": mape, "mdape": mdape, "wmape": wmape}
 
     print("\n--- Evaluation (hold-out) ---")
     print(f"MAE:    {mae:.2f}")
     print(f"RMSE:   {rmse:.2f}")
-    print(f"R^2:    {r2:.4f}")
+    print(f"R²:     {r2:.4f}")
     print(f"MdAPE:  {mdape:.2f}%  (median; robust to scale mix)")
     print(f"wMAPE:  {wmape:.2f}%  (sum|error|/sum|y|)")
     print(f"MAPE:   {mape:.2f}%  (mean; can be inflated when |y| is small)")
@@ -907,9 +937,9 @@ def train() -> dict:
         "n_records": int(len(train_df)),
         "metrics": metrics,
         "attendance_summary": {
-            "min": float(daily["attendance"].min()),
-            "max": float(daily["attendance"].max()),
-            "mean": float(daily["attendance"].mean()),
+            "min":    float(daily["attendance"].min()),
+            "max":    float(daily["attendance"].max()),
+            "mean":   float(daily["attendance"].mean()),
             "median": float(daily["attendance"].median()),
         },
         "feature_importances": {k: float(v) for k, v in importances},
@@ -919,10 +949,10 @@ def train() -> dict:
     joblib.dump(training_meta, META_PATH)
     joblib.dump(daily[["date", "attendance"]], HISTORICAL_PATH)
 
-    print(f"\nSaved model -> {MODEL_PATH}")
-    print(f"Saved features -> {FEATURE_COLS_PATH}")
-    print(f"Saved meta -> {META_PATH}")
-    print(f"Saved historical -> {HISTORICAL_PATH}")
+    print(f"\nSaved model     → {MODEL_PATH}")
+    print(f"Saved features  → {FEATURE_COLS_PATH}")
+    print(f"Saved meta      → {META_PATH}")
+    print(f"Saved historical→ {HISTORICAL_PATH}")
 
     return metrics
 
